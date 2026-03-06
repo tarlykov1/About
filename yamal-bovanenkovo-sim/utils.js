@@ -1,83 +1,41 @@
-window.YamalSim = window.YamalSim || {};
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js';
 
-window.YamalSim.utils = (() => {
-  const tmpVec3 = new THREE.Vector3();
+export const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
 
-  function clamp(value, min, max) {
-    return Math.min(max, Math.max(min, value));
-  }
-
-  function lerp(a, b, t) {
-    return a + (b - a) * t;
-  }
-
-  function rand(min, max) {
-    return min + Math.random() * (max - min);
-  }
-
-  function randInt(min, max) {
-    return Math.floor(rand(min, max + 1));
-  }
-
-  function hash2D(x, z) {
-    const s = Math.sin(x * 127.1 + z * 311.7) * 43758.5453123;
-    return s - Math.floor(s);
-  }
-
-  function smoothNoise2D(x, z) {
-    const x0 = Math.floor(x);
-    const z0 = Math.floor(z);
-    const tx = x - x0;
-    const tz = z - z0;
-
-    const n00 = hash2D(x0, z0);
-    const n10 = hash2D(x0 + 1, z0);
-    const n01 = hash2D(x0, z0 + 1);
-    const n11 = hash2D(x0 + 1, z0 + 1);
-
-    const sx = tx * tx * (3 - 2 * tx);
-    const sz = tz * tz * (3 - 2 * tz);
-
-    const nx0 = n00 * (1 - sx) + n10 * sx;
-    const nx1 = n01 * (1 - sx) + n11 * sx;
-    return nx0 * (1 - sz) + nx1 * sz;
-  }
-
-  function fbmNoise(x, z, octaves = 4) {
-    let amplitude = 1;
-    let frequency = 1;
-    let sum = 0;
-    let norm = 0;
-
-    for (let i = 0; i < octaves; i++) {
-      sum += smoothNoise2D(x * frequency, z * frequency) * amplitude;
-      norm += amplitude;
-      amplitude *= 0.5;
-      frequency *= 2;
-    }
-
-    return sum / norm;
-  }
-
-  function distance2D(ax, az, bx, bz) {
-    const dx = ax - bx;
-    const dz = az - bz;
-    return Math.hypot(dx, dz);
-  }
-
-  function lookAtYaw(from, to) {
-    tmpVec3.copy(to).sub(from);
-    return Math.atan2(tmpVec3.x, tmpVec3.z);
-  }
-
-  return {
-    clamp,
-    lerp,
-    rand,
-    randInt,
-    smoothNoise2D,
-    fbmNoise,
-    distance2D,
-    lookAtYaw,
+export function seededRandom(seed = 1) {
+  let state = seed >>> 0;
+  return () => {
+    state = (1664525 * state + 1013904223) >>> 0;
+    return state / 4294967296;
   };
-})();
+}
+
+export function noise2D(x, z) {
+  const a = Math.sin(x * 0.0037 + z * 0.0049) * 0.5;
+  const b = Math.cos(x * 0.0091 - z * 0.0043) * 0.35;
+  const c = Math.sin((x + z) * 0.013) * 0.15;
+  return a + b + c;
+}
+
+export function terrainHeightAt(x, z) {
+  const base = noise2D(x, z) * 8;
+  const drift = Math.sin(z * 0.001) * 2 + Math.cos(x * 0.0012) * 1.8;
+  return base + drift;
+}
+
+export function createBox(size, color, metalness = 0.25, roughness = 0.75) {
+  const mat = new THREE.MeshStandardMaterial({ color, metalness, roughness });
+  const geo = new THREE.BoxGeometry(size.x, size.y, size.z);
+  return new THREE.Mesh(geo, mat);
+}
+
+export function worldZoneLabel(pos) {
+  const d = Math.hypot(pos.x, pos.z);
+  if (d < 120) return { zone: 'Construction Site', status: 'СТРОЙПЛОЩАДКА' };
+  if (pos.x > -320 && pos.x < -40 && pos.z > -130 && pos.z < 160)
+    return { zone: 'Modular Camp', status: 'МОДУЛЬНЫЙ ГОРОДОК' };
+  if (pos.x > 90 && pos.x < 360 && pos.z > -270 && pos.z < 120)
+    return { zone: 'Pipeline Yard', status: 'СКЛАД ТРУБ' };
+  if (d < 520) return { zone: 'Peripheral Works', status: 'ПЕРИФЕРИЯ' };
+  return { zone: 'Arctic Tundra', status: 'ТУНДРА' };
+}

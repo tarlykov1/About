@@ -1,43 +1,32 @@
-window.YamalSim = window.YamalSim || {};
+import { worldZoneLabel } from './utils.js';
 
-window.YamalSim.ui = (() => {
-  function determineZone(x, z) {
-    if (x < -120 && z > 60 && z < 250) return "МОДУЛЬНЫЙ ГОРОДОК";
-    if (x > 120 && z > -20 && z < 190) return "СКЛАД ТРУБ";
-    if (Math.abs(x) < 350 && Math.abs(z) < 300) return "СТРОЙПЛОЩАДКА";
-    if (Math.hypot(x, z) > 640) return "ТУНДРА";
-    return "ПРОМЗОНА";
-  }
+export function createUI({ onStart, onToggleTime }) {
+  const overlay = document.getElementById('start-overlay');
+  const startBtn = document.getElementById('start-btn');
+  const zoneEl = document.getElementById('hud-zone');
+  const statusEl = document.getElementById('hud-status');
+  const coordsEl = document.getElementById('hud-coords');
+  const timeEl = document.getElementById('hud-time');
+  const weatherEl = document.getElementById('hud-weather');
+  const toggleTime = document.getElementById('toggle-time');
 
-  function setupUI(game) {
-    const overlay = document.getElementById("startOverlay");
-    const startBtn = document.getElementById("startBtn");
-    const coords = document.getElementById("coords");
-    const zone = document.getElementById("zone");
-    const weather = document.getElementById("weather");
+  startBtn.addEventListener('click', () => {
+    overlay.classList.add('overlay--hidden');
+    onStart();
+  });
 
-    startBtn.addEventListener("click", () => {
-      overlay.classList.remove("visible");
-      game.controls.controls.lock();
-    });
-
-    game.controls.controls.addEventListener("unlock", () => {
-      overlay.classList.add("visible");
-    });
-
-    function update(playerPos, weatherMode) {
-      coords.textContent = `X: ${playerPos.x.toFixed(1)} | Y: ${playerPos.y.toFixed(1)} | Z: ${playerPos.z.toFixed(1)}`;
-      zone.textContent = `Zone: ${determineZone(playerPos.x, playerPos.z)}`;
-      weather.textContent = `Weather: ${weatherMode}`;
-    }
-
-    return {
-      update,
-    };
-  }
+  toggleTime.addEventListener('click', onToggleTime);
 
   return {
-    setupUI,
-    determineZone,
+    updatePlayer(position, worldInfo) {
+      const zone = worldZoneLabel(position);
+      zoneEl.textContent = `Zone: ${zone.zone}`;
+      statusEl.textContent = `СТАТУС: ${zone.status}`;
+      coordsEl.textContent = `X: ${position.x.toFixed(1)} | Y: ${position.y.toFixed(1)} | Z: ${position.z.toFixed(1)}`;
+      if (worldInfo) {
+        timeEl.textContent = `Освещение: ${worldInfo.timeLabel}`;
+        weatherEl.textContent = `Погода: ${worldInfo.weatherLabel}`;
+      }
+    },
   };
-})();
+}

@@ -1,54 +1,42 @@
 <!doctype html>
 <html lang="ru">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Yamal Bovanenkovo Construction Simulator</title>
-  <link rel="stylesheet" href="./style.css" />
-</head>
-<body>
-  <div id="startOverlay" class="overlay visible">
-    <div class="overlay-card">
-      <h1>Yamal Bovanenkovo Construction Simulator</h1>
-      <p>
-        Атмосферный симулятор пешего обхода северной стройки в условиях арктической тундры.
-        Изучайте модульный городок, строительные зоны, склад труб и удалённую тундру.
-      </p>
-      <ul>
-        <li><b>WASD</b> — движение</li>
-        <li><b>Mouse</b> — обзор</li>
-        <li><b>Shift</b> — ускорение</li>
-        <li><b>Space</b> — лёгкий прыжок</li>
-      </ul>
-      <button id="startBtn">Начать</button>
-      <small>После старта курсор будет захвачен (Pointer Lock).</small>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Yamal Bovanenkovo Construction Simulator</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div id="app"></div>
+
+    <div id="hud" class="hud">
+      <div class="hud__title">Yamal Bovanenkovo Construction Simulator</div>
+      <div class="hud__line">WASD — движение | Shift — бег | Space — прыжок | Mouse — обзор</div>
+      <div class="hud__line" id="hud-zone">Zone: Loading...</div>
+      <div class="hud__line" id="hud-status">СТАТУС: —</div>
+      <div class="hud__line" id="hud-coords">X: 0 | Y: 0 | Z: 0</div>
+      <div class="hud__line" id="hud-time">Освещение: ДЕНЬ</div>
+      <div class="hud__line" id="hud-weather">Погода: СЛАБЫЙ СНЕГ</div>
+      <button id="toggle-time" class="hud__btn">Сменить режим освещения</button>
     </div>
-  </div>
 
-  <div id="hud" class="hud">
-    <div class="hud-title">Yamal Bovanenkovo Construction Simulator</div>
-    <div class="hud-row">WASD — движение | Shift — бег | Space — прыжок | Mouse — обзор | T — смена времени</div>
-    <div class="hud-row" id="coords">X: 0 | Y: 1.7 | Z: 0</div>
-    <div class="hud-row" id="zone">Zone: STROYPLOSHCHADKA</div>
-    <div class="hud-row" id="weather">Weather: Light Snow</div>
-  </div>
+    <div id="start-overlay" class="overlay">
+      <div class="overlay__card">
+        <h1>Yamal / Бованенково</h1>
+        <p>
+          Атмосферный симулятор пешего перемещения по арктической строительной зоне нефтегазового
+          месторождения.
+        </p>
+        <ul>
+          <li>WASD — перемещение</li>
+          <li>Shift — ускорение</li>
+          <li>Space — прыжок</li>
+          <li>Мышь — обзор (Pointer Lock)</li>
+        </ul>
+        <button id="start-btn" class="overlay__start">Начать</button>
+      </div>
+    </div>
 
-  <div id="crosshair">+</div>
-
-  <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/examples/js/controls/PointerLockControls.js"></script>
-
-  <script src="./utils.js"></script>
-  <script src="./terrain.js"></script>
-  <script src="./environment.js"></script>
-  <script src="./roads.js"></script>
-  <script src="./buildings.js"></script>
-  <script src="./construction.js"></script>
-  <script src="./animals.js"></script>
-  <script src="./weather.js"></script>
-  <script src="./controls.js"></script>
-  <script src="./ui.js"></script>
-  <script src="./scene.js"></script>
-  <script src="./main.js"></script>
-</body>
+    <script type="module" src="./main.js"></script>
+  </body>
 </html>

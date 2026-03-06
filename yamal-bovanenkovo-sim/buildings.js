@@ -1,131 +1,105 @@
-window.YamalSim = window.YamalSim || {};
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js';
+import { createBox, terrainHeightAt } from './utils.js';
 
-window.YamalSim.buildings = (() => {
-  const C = {
-    wallLight: 0xcdd8e1,
-    wallBlue: 0x8ea0b2,
-    roofDark: 0x4a5968,
-    trim: 0x6a7a89,
-    window: 0xadc7de,
-  };
+function modularBuilding({ x, z, len = 24, w = 7, h = 4, color = 0xcfd8de, roof = 0x5f7281 }) {
+  const g = new THREE.Group();
+  const y = terrainHeightAt(x, z);
+  g.position.set(x, y, z);
 
-  function makeModule({ w = 22, h = 6, d = 10, color = C.wallLight, roof = C.roofDark }) {
-    const g = new THREE.Group();
-    const body = new THREE.Mesh(
-      new THREE.BoxGeometry(w, h, d),
-      new THREE.MeshStandardMaterial({ color, roughness: 0.93, metalness: 0.05 })
-    );
-    body.position.y = h * 0.5;
-    body.castShadow = true;
-    body.receiveShadow = true;
-    g.add(body);
+  const body = createBox(new THREE.Vector3(len, h, w), color, 0.15, 0.85);
+  body.position.y = h / 2;
+  body.castShadow = true;
+  body.receiveShadow = true;
+  g.add(body);
 
-    const roofMesh = new THREE.Mesh(
-      new THREE.BoxGeometry(w + 0.6, 0.6, d + 0.6),
-      new THREE.MeshStandardMaterial({ color: roof, roughness: 0.82 })
-    );
-    roofMesh.position.y = h + 0.28;
-    roofMesh.castShadow = true;
-    g.add(roofMesh);
+  const roofMesh = createBox(new THREE.Vector3(len + 0.4, 0.6, w + 0.6), roof, 0.3, 0.6);
+  roofMesh.position.y = h + 0.3;
+  roofMesh.castShadow = true;
+  g.add(roofMesh);
 
-    const windowMat = new THREE.MeshStandardMaterial({ color: C.window, emissive: 0x2f4c67, emissiveIntensity: 0.18 });
-    const windowGeo = new THREE.BoxGeometry(1.8, 1.2, 0.1);
-    for (let i = -3; i <= 3; i++) {
-      if (i === 0) continue;
-      const wx = (w / 8) * i;
-      const win = new THREE.Mesh(windowGeo, windowMat);
-      win.position.set(wx, h * 0.58, d / 2 + 0.06);
-      g.add(win);
-    }
-
-    const stairs = new THREE.Mesh(
-      new THREE.BoxGeometry(3.3, 0.8, 2.6),
-      new THREE.MeshStandardMaterial({ color: C.trim, roughness: 0.95 })
-    );
-    stairs.position.set(0, 0.4, d / 2 + 1.3);
-    stairs.receiveShadow = true;
-    g.add(stairs);
-
-    return g;
+  const winMat = new THREE.MeshStandardMaterial({ color: 0x8ca2b2, emissive: 0x516070, emissiveIntensity: 0.2 });
+  const winGeo = new THREE.BoxGeometry(1.4, 1.1, 0.15);
+  for (let i = -Math.floor(len / 5); i <= Math.floor(len / 5); i++) {
+    if (Math.abs(i) < 1) continue;
+    const winL = new THREE.Mesh(winGeo, winMat);
+    winL.position.set(i * 2.2, h * 0.55, w / 2 + 0.08);
+    const winR = winL.clone();
+    winR.position.z = -w / 2 - 0.08;
+    g.add(winL, winR);
   }
 
-  function makeFenceLine(length = 120) {
-    const g = new THREE.Group();
-    const postGeo = new THREE.CylinderGeometry(0.12, 0.12, 2.2, 6);
-    const postMat = new THREE.MeshStandardMaterial({ color: 0x69737d, roughness: 0.9 });
+  const stairs = createBox(new THREE.Vector3(2.6, 0.6, 1.8), 0x707c86, 0.4, 0.55);
+  stairs.position.set(-len / 2 + 2, 0.3, w / 2 + 1.2);
+  g.add(stairs);
 
-    for (let i = 0; i <= length / 6; i++) {
-      const x = -length / 2 + i * 6;
-      const p = new THREE.Mesh(postGeo, postMat);
-      p.position.set(x, 1.1, 0);
-      g.add(p);
+  return g;
+}
 
-      if (i < length / 6) {
-        const rail = new THREE.Mesh(
-          new THREE.BoxGeometry(6, 0.08, 0.08),
-          new THREE.MeshStandardMaterial({ color: 0x7b868f })
-        );
-        rail.position.set(x + 3, 1.5, 0);
-        g.add(rail);
-      }
-    }
+function container(x, z, color = 0x7b8b97) {
+  const y = terrainHeightAt(x, z);
+  const c = createBox(new THREE.Vector3(6, 2.7, 2.6), color, 0.35, 0.7);
+  c.position.set(x, y + 1.35, z);
+  c.castShadow = true;
+  c.receiveShadow = true;
+  return c;
+}
 
-    return g;
-  }
+export function createCampAndHQ() {
+  const group = new THREE.Group();
 
-  function createCamp(terrain) {
-    const group = new THREE.Group();
-    group.name = "ModularCamp";
+  // HQ + admin block
+  group.add(modularBuilding({ x: -120, z: -40, len: 40, w: 10, h: 5, color: 0xd5dde3, roof: 0x607483 }));
+  group.add(modularBuilding({ x: -148, z: -65, len: 24, w: 8, h: 4, color: 0xcbd5dd, roof: 0x5d6f7c }));
 
-    const rows = [
-      { z: 120, count: 5, color: C.wallLight },
-      { z: 150, count: 5, color: C.wallBlue },
-      { z: 182, count: 5, color: C.wallLight },
-    ];
-
-    rows.forEach((row, rIdx) => {
-      for (let i = 0; i < row.count; i++) {
-        const mod = makeModule({ color: row.color, roof: rIdx % 2 ? 0x485764 : 0x556777 });
-        const x = -380 + i * 56;
-        const z = row.z;
-        mod.position.set(x, terrain.getHeightAt(x, z), z);
-        group.add(mod);
-      }
-    });
-
-    const hq = makeModule({ w: 44, h: 7, d: 16, color: 0x9aa9b6, roof: 0x3f4e5f });
-    hq.position.set(-220, terrain.getHeightAt(-220, 78), 78);
-    group.add(hq);
-
-    const checkpoint = makeModule({ w: 14, h: 5, d: 8, color: 0xa5b4c2, roof: 0x4c5c6a });
-    checkpoint.position.set(-430, terrain.getHeightAt(-430, 98), 98);
-    group.add(checkpoint);
-
-    for (let i = 0; i < 16; i++) {
-      const c = new THREE.Mesh(
-        new THREE.BoxGeometry(6, 2.6, 2.6),
-        new THREE.MeshStandardMaterial({ color: i % 2 ? 0x8897a4 : 0x6f7f8d, roughness: 0.9 })
+  // camp rows
+  for (let r = 0; r < 3; r++) {
+    for (let i = 0; i < 4; i++) {
+      group.add(
+        modularBuilding({
+          x: -250 + i * 34,
+          z: -90 + r * 58,
+          len: 26,
+          w: 7,
+          h: 3.8,
+          color: 0xd2d9df,
+          roof: r % 2 ? 0x556b79 : 0x4f6674,
+        })
       );
-      const x = -440 + (i % 8) * 10;
-      const z = 212 + Math.floor(i / 8) * 4;
-      c.position.set(x, terrain.getHeightAt(x, z) + 1.3, z);
-      c.castShadow = true;
-      c.receiveShadow = true;
-      group.add(c);
     }
-
-    const fenceA = makeFenceLine(280);
-    fenceA.position.set(-250, terrain.getHeightAt(-250, 92), 92);
-    group.add(fenceA);
-
-    const fenceB = makeFenceLine(280);
-    fenceB.position.set(-250, terrain.getHeightAt(-250, 206), 206);
-    group.add(fenceB);
-
-    return group;
   }
 
-  return {
-    createCamp,
-  };
-})();
+  // canteen + checkpoint
+  group.add(modularBuilding({ x: -178, z: 122, len: 30, w: 9, h: 4.3, color: 0xd0d9de, roof: 0x687a85 }));
+  group.add(modularBuilding({ x: -72, z: 145, len: 18, w: 8, h: 3.6, color: 0xc8d0d7, roof: 0x667884 }));
+
+  // generator blocks + containers
+  for (let i = 0; i < 20; i++) {
+    const x = -295 + (i % 5) * 9;
+    const z = 118 + Math.floor(i / 5) * 5;
+    group.add(container(x, z, i % 2 ? 0x768692 : 0x6c7d89));
+  }
+
+  // fence perimeter around camp
+  const fenceMat = new THREE.MeshStandardMaterial({ color: 0x5c666e, metalness: 0.5, roughness: 0.5 });
+  const postGeo = new THREE.CylinderGeometry(0.12, 0.12, 2.2, 8);
+  const railGeo = new THREE.BoxGeometry(6, 0.12, 0.12);
+  for (let i = 0; i < 48; i++) {
+    const angle = (i / 48) * Math.PI * 2;
+    const x = -185 + Math.cos(angle) * 145;
+    const z = 10 + Math.sin(angle) * 145;
+    const y = terrainHeightAt(x, z);
+
+    const post = new THREE.Mesh(postGeo, fenceMat);
+    post.position.set(x, y + 1.1, z);
+    group.add(post);
+
+    if (i % 2 === 0) {
+      const rail = new THREE.Mesh(railGeo, fenceMat);
+      rail.position.set(x, y + 1.35, z);
+      rail.rotation.y = angle + Math.PI / 2;
+      group.add(rail);
+    }
+  }
+
+  return group;
+}

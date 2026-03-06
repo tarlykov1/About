@@ -1,88 +1,72 @@
-window.YamalSim = window.YamalSim || {};
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js';
+import { PointerLockControls } from 'https://cdn.jsdelivr.net/npm/three@0.163.0/examples/jsm/controls/PointerLockControls.js';
+import { clamp, terrainHeightAt } from './utils.js';
 
-window.YamalSim.controls = (() => {
-  const { clamp } = window.YamalSim.utils;
+export function createPlayerControls(camera, domElement) {
+  const controls = new PointerLockControls(camera, domElement);
 
-  function setupControls(camera, domElement, terrain) {
-    const controls = new THREE.PointerLockControls(camera, domElement);
-    const state = {
-      controls,
-      velocity: new THREE.Vector3(),
-      direction: new THREE.Vector3(),
-      keys: {
-        KeyW: false,
-        KeyA: false,
-        KeyS: false,
-        KeyD: false,
-        ShiftLeft: false,
-        Space: false,
-      },
-      canJump: false,
-      eyeHeight: 1.7,
-    };
+  const velocity = new THREE.Vector3();
+  const direction = new THREE.Vector3();
+  const keys = {
+    KeyW: false,
+    KeyS: false,
+    KeyA: false,
+    KeyD: false,
+    ShiftLeft: false,
+    Space: false,
+  };
 
-    const onKey = (ev, down) => {
-      if (state.keys.hasOwnProperty(ev.code)) state.keys[ev.code] = down;
-      if (ev.code === "Space") ev.preventDefault();
-    };
+  let verticalVelocity = 0;
+  let canJump = false;
+  const eyeHeight = 1.7;
 
-    window.addEventListener("keydown", (ev) => onKey(ev, true));
-    window.addEventListener("keyup", (ev) => onKey(ev, false));
-
-    controls.addEventListener("lock", () => {
-      state.isLocked = true;
-    });
-
-    controls.addEventListener("unlock", () => {
-      state.isLocked = false;
-    });
-
-    function update(delta) {
-      if (!state.isLocked) return;
-
-      const speed = state.keys.ShiftLeft ? 45 : 26;
-      const damping = 10;
-
-      state.velocity.x -= state.velocity.x * damping * delta;
-      state.velocity.z -= state.velocity.z * damping * delta;
-      state.velocity.y -= 30 * delta;
-
-      state.direction.z = Number(state.keys.KeyW) - Number(state.keys.KeyS);
-      state.direction.x = Number(state.keys.KeyD) - Number(state.keys.KeyA);
-      state.direction.normalize();
-
-      if (state.direction.z !== 0) state.velocity.z -= state.direction.z * speed * delta;
-      if (state.direction.x !== 0) state.velocity.x -= state.direction.x * speed * delta;
-
-      if (state.keys.Space && state.canJump) {
-        state.velocity.y = 10.5;
-        state.canJump = false;
-      }
-
-      controls.moveRight(-state.velocity.x * delta);
-      controls.moveForward(-state.velocity.z * delta);
-      controls.getObject().position.y += state.velocity.y * delta;
-
-      const p = controls.getObject().position;
-      const terrainY = terrain.getHeightAt(p.x, p.z) + state.eyeHeight;
-
-      if (p.y < terrainY) {
-        state.velocity.y = 0;
-        p.y = terrainY;
-        state.canJump = true;
-      }
-
-      p.y = clamp(p.y, terrainY, terrainY + 14);
+  const onKey = (v) => (e) => {
+    if (keys[e.code] !== undefined) {
+      keys[e.code] = v;
+      if (e.code === 'Space') e.preventDefault();
     }
+  };
 
-    return {
-      controls,
-      state,
-      update,
-    };
-  }
+  document.addEventListener('keydown', onKey(true));
+  document.addEventListener('keyup', onKey(false));
 
   return {
-    setupControls,
+    controls,
+    lock: () => controls.lock(),
+    update(dt) {
+      const speed = keys.ShiftLeft ? 21 : 11.5;
+      const friction = 8.5;
+
+      direction.set(0, 0, Number(keys.KeyS) - Number(keys.KeyW));
+      direction.x = Number(keys.KeyD) - Number(keys.KeyA);
+      direction.normalize();
+
+      velocity.x -= velocity.x * friction * dt;
+      velocity.z -= velocity.z * friction * dt;
+
+      if (keys.KeyW || keys.KeyS) velocity.z += direction.z * speed * dt * 14;
+      if (keys.KeyA || keys.KeyD) velocity.x += direction.x * speed * dt * 14;
+
+      controls.moveRight(velocity.x * dt);
+      controls.moveForward(velocity.z * dt);
+
+      const pos = camera.position;
+      const ground = terrainHeightAt(pos.x, pos.z) + eyeHeight;
+
+      verticalVelocity -= 18 * dt;
+      if (keys.Space && canJump) {
+        verticalVelocity = 7.2;
+        canJump = false;
+      }
+
+      pos.y += verticalVelocity * dt;
+      if (pos.y <= ground) {
+        pos.y = ground;
+        verticalVelocity = 0;
+        canJump = true;
+      }
+
+      pos.y = clamp(pos.y, ground, ground + 14);
+    },
   };
-})();
+}

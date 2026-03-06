@@ -1,110 +1,116 @@
-window.YamalSim = window.YamalSim || {};
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js';
+import { createTerrain } from './terrain.js';
+import { setupEnvironment, createFloodLight } from './environment.js';
+import { createRoadNetwork } from './roads.js';
+import { createCampAndHQ } from './buildings.js';
+import { createConstructionZone } from './construction.js';
+import { createAnimals } from './animals.js';
+import { createBox, terrainHeightAt } from './utils.js';
 
-window.YamalSim.scene = (() => {
-  function buildRenderer() {
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    document.body.appendChild(renderer.domElement);
-    return renderer;
-  }
+function createPipelineYard() {
+  const group = new THREE.Group();
 
-  function createScene() {
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2500);
-    camera.position.set(-240, 8, 80);
+  const rackMat = new THREE.MeshStandardMaterial({ color: 0x687278, metalness: 0.55, roughness: 0.55 });
+  const pipeMat = new THREE.MeshStandardMaterial({ color: 0x4c555d, metalness: 0.7, roughness: 0.35 });
 
-    const renderer = buildRenderer();
-    const terrain = window.YamalSim.terrain;
+  for (let row = 0; row < 6; row++) {
+    for (let i = 0; i < 15; i++) {
+      const x = 130 + i * 13;
+      const z = -200 + row * 30;
+      const y = terrainHeightAt(x, z);
 
-    const terrainMesh = terrain.createTerrain();
-    scene.add(terrainMesh);
+      const supports = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.2, 8), rackMat);
+      supports.position.set(x, y + 0.65, z);
+      group.add(supports);
 
-    const env = window.YamalSim.environment.setupEnvironment(scene);
-
-    const roads = window.YamalSim.roads.createRoadNetwork(terrain);
-    scene.add(roads);
-
-    const camp = window.YamalSim.buildings.createCamp(terrain);
-    scene.add(camp);
-
-    const constr = window.YamalSim.construction.createConstructionZones(terrain, scene);
-    scene.add(constr.group);
-
-    const animals = window.YamalSim.animals.createAnimals(terrain);
-    scene.add(animals.group);
-
-    const weather = window.YamalSim.weather.createSnowSystem(2600);
-    scene.add(weather.points);
-
-    const controls = window.YamalSim.controls.setupControls(camera, renderer.domElement, terrain);
-    scene.add(controls.controls.getObject());
-
-    controls.controls.getObject().position.set(-240, terrain.getHeightAt(-240, 80) + 1.7, 80);
-
-    const game = {
-      scene,
-      camera,
-      renderer,
-      terrain,
-      environment: env,
-      controls,
-      weather,
-      animals,
-      floodlights: constr.lights,
-      ui: null,
-      lastTime: performance.now(),
-      autoCycle: true,
-    };
-
-    window.addEventListener("resize", () => {
-      game.camera.aspect = window.innerWidth / window.innerHeight;
-      game.camera.updateProjectionMatrix();
-      game.renderer.setSize(window.innerWidth, window.innerHeight);
-    });
-
-    window.addEventListener("keydown", (ev) => {
-      if (ev.code === "KeyT") {
-        const next = game.environment.timeMode === "day" ? "dusk" : "day";
-        window.YamalSim.environment.setMode(game.environment, game.scene, next);
+      for (let l = 0; l < 3; l++) {
+        const pipe = new THREE.Mesh(new THREE.CylinderGeometry(1.05, 1.05, 11.5, 16), pipeMat);
+        pipe.rotation.z = Math.PI / 2;
+        pipe.position.set(x, y + 2 + l * 1.35, z);
+        group.add(pipe);
       }
-    });
-
-    return game;
-  }
-
-  function updateFloodlights(game, delta) {
-    const evening = game.environment.timeMode === "dusk";
-    game.floodlights.forEach((l) => {
-      const targetIntensity = evening ? 1.15 : 0.55;
-      l.intensity += (targetIntensity - l.intensity) * Math.min(delta * 2.5, 1);
-      l.distance = evening ? 150 : 100;
-    });
-  }
-
-  function animate(game) {
-    const now = performance.now();
-    const delta = Math.min((now - game.lastTime) / 1000, 0.05);
-    game.lastTime = now;
-
-    game.controls.update(delta);
-    window.YamalSim.environment.updateEnvironment(game.environment, game.scene, delta, game.autoCycle);
-    window.YamalSim.weather.updateWeather(game.weather, game.scene, game.controls.controls.getObject().position, delta * 60);
-    window.YamalSim.animals.updateAnimals(game.animals, game.terrain, delta * 60);
-    updateFloodlights(game, delta);
-
-    if (game.ui) {
-      game.ui.update(game.controls.controls.getObject().position, game.weather.mode);
     }
-
-    game.renderer.render(game.scene, game.camera);
-    requestAnimationFrame(() => animate(game));
   }
 
-  return {
-    createScene,
-    animate,
-  };
-})();
+  // pipeline route section
+  for (let i = 0; i < 18; i++) {
+    const x = 200 + i * 18;
+    const z = -260 + Math.sin(i * 0.35) * 20;
+    const y = terrainHeightAt(x, z);
+    const seg = new THREE.Mesh(new THREE.CylinderGeometry(1.25, 1.25, 16, 18), pipeMat);
+    seg.rotation.z = Math.PI / 2;
+    seg.position.set(x, y + 3.3, z);
+    group.add(seg);
+
+    const stand = createBox(new THREE.Vector3(1, 3, 2), 0x6a747a, 0.5, 0.5);
+    stand.position.set(x, y + 1.5, z);
+    group.add(stand);
+  }
+
+  return group;
+}
+
+function createPeripheralProps() {
+  const group = new THREE.Group();
+
+  for (let i = 0; i < 60; i++) {
+    const x = -420 + Math.random() * 840;
+    const z = -420 + Math.random() * 840;
+    if (Math.hypot(x, z) < 180) continue;
+    const y = terrainHeightAt(x, z);
+
+    const h = 0.8 + Math.random() * 2.5;
+    const mound = new THREE.Mesh(
+      new THREE.ConeGeometry(2.2 + Math.random() * 2.5, h, 8),
+      new THREE.MeshStandardMaterial({ color: 0xd8e1e9, roughness: 0.9 })
+    );
+    mound.position.set(x, y + h / 2, z);
+    group.add(mound);
+  }
+
+  for (const [x, z] of [
+    [-340, -240],
+    [420, 280],
+    [510, -150],
+    [-520, 190],
+    [600, 40],
+    [-620, -80],
+  ]) {
+    group.add(createFloodLight(x, z));
+  }
+
+  return group;
+}
+
+export function buildWorld(scene, renderer) {
+  const systems = {};
+
+  systems.environment = setupEnvironment(scene, renderer);
+  scene.add(createTerrain());
+  scene.add(createRoadNetwork());
+  scene.add(createCampAndHQ());
+  scene.add(createConstructionZone());
+  scene.add(createPipelineYard());
+  scene.add(createPeripheralProps());
+
+  // containers and signs around main area
+  const markers = new THREE.Group();
+  for (let i = 0; i < 22; i++) {
+    const x = -40 + (i % 11) * 17;
+    const z = 84 + Math.floor(i / 11) * 9;
+    const y = terrainHeightAt(x, z);
+    const c = createBox(new THREE.Vector3(8, 2.8, 2.8), i % 2 ? 0x6d7b86 : 0x5d6b76, 0.35, 0.75);
+    c.position.set(x, y + 1.4, z);
+    markers.add(c);
+  }
+  scene.add(markers);
+
+  const sign = createBox(new THREE.Vector3(5.5, 2, 0.2), 0x73808b, 0.3, 0.7);
+  sign.position.set(-86, terrainHeightAt(-86, 110) + 2.8, 110);
+  scene.add(sign);
+
+  systems.animals = createAnimals();
+  scene.add(systems.animals.group);
+
+  return systems;
+}

@@ -1,53 +1,45 @@
-window.YamalSim = window.YamalSim || {};
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js';
+import { terrainHeightAt } from './utils.js';
 
-window.YamalSim.roads = (() => {
-  function roadSegment(length, width, color = 0x8f9498) {
-    const mesh = new THREE.Mesh(
-      new THREE.PlaneGeometry(width, length),
-      new THREE.MeshStandardMaterial({ color, roughness: 1, metalness: 0 })
-    );
-    mesh.rotation.x = -Math.PI / 2;
-    mesh.receiveShadow = true;
-    return mesh;
+function roadSegment(width, length, color = 0xaeb5bb) {
+  const mesh = new THREE.Mesh(
+    new THREE.PlaneGeometry(width, length),
+    new THREE.MeshStandardMaterial({ color, roughness: 1, metalness: 0 })
+  );
+  mesh.rotation.x = -Math.PI / 2;
+  return mesh;
+}
+
+export function createRoadNetwork() {
+  const group = new THREE.Group();
+
+  const defs = [
+    { x: -60, z: 0, w: 16, l: 370, r: 0 },
+    { x: 60, z: -40, w: 14, l: 290, r: Math.PI / 12 },
+    { x: 190, z: -90, w: 12, l: 360, r: Math.PI / 2.8 },
+    { x: -180, z: 12, w: 11, l: 290, r: Math.PI / 2 },
+    { x: -270, z: 40, w: 10, l: 240, r: Math.PI / 2.4 },
+    { x: 340, z: 20, w: 12, l: 280, r: Math.PI / 2 },
+  ];
+
+  defs.forEach((d) => {
+    const s = roadSegment(d.w, d.l, 0xaab1b5);
+    s.position.set(d.x, terrainHeightAt(d.x, d.z) + 0.14, d.z);
+    s.rotation.y = d.r;
+    group.add(s);
+  });
+
+  // wheel tracks in tundra
+  const trackMat = new THREE.MeshStandardMaterial({ color: 0x96a0a7, roughness: 1 });
+  for (let i = 0; i < 22; i++) {
+    const z = -340 + i * 45;
+    const x = 430 + Math.sin(i * 0.7) * 28;
+    const track = new THREE.Mesh(new THREE.PlaneGeometry(2.1, 24), trackMat);
+    track.rotation.x = -Math.PI / 2;
+    track.position.set(x, terrainHeightAt(x, z) + 0.08, z);
+    track.rotation.y = Math.sin(i * 1.2) * 0.35;
+    group.add(track);
   }
 
-  function createRoadNetwork(terrain) {
-    const group = new THREE.Group();
-    group.name = "RoadNetwork";
-
-    const main = roadSegment(1050, 26, 0x8a8f93);
-    main.position.set(40, terrain.getHeightAt(40, 0) + 0.25, 0);
-    group.add(main);
-
-    const branch1 = roadSegment(460, 16, 0x858b8f);
-    branch1.position.set(-120, terrain.getHeightAt(-120, -190) + 0.2, -190);
-    branch1.rotation.y = Math.PI / 2.8;
-    group.add(branch1);
-
-    const branch2 = roadSegment(620, 18, 0x83888c);
-    branch2.position.set(190, terrain.getHeightAt(190, 160) + 0.2, 160);
-    branch2.rotation.y = -Math.PI / 3.2;
-    group.add(branch2);
-
-    const campRoad = roadSegment(320, 14, 0x8f9499);
-    campRoad.position.set(-260, terrain.getHeightAt(-260, 120) + 0.18, 120);
-    campRoad.rotation.y = -Math.PI / 2;
-    group.add(campRoad);
-
-    for (let i = 0; i < 18; i++) {
-      const mark = new THREE.Mesh(
-        new THREE.PlaneGeometry(1.2, 7),
-        new THREE.MeshBasicMaterial({ color: 0xc8ced3, transparent: true, opacity: 0.42 })
-      );
-      mark.rotation.x = -Math.PI / 2;
-      mark.position.set(40, terrain.getHeightAt(40, -500 + i * 56) + 0.29, -500 + i * 56);
-      group.add(mark);
-    }
-
-    return group;
-  }
-
-  return {
-    createRoadNetwork,
-  };
-})();
+  return group;
+}

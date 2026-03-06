@@ -1,68 +1,53 @@
-window.YamalSim = window.YamalSim || {};
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js';
+import { terrainHeightAt } from './utils.js';
 
-window.YamalSim.terrain = (() => {
-  const { fbmNoise, clamp } = window.YamalSim.utils;
+export function createTerrain() {
+  const group = new THREE.Group();
+  const size = 2200;
+  const segments = 220;
+  const geo = new THREE.PlaneGeometry(size, size, segments, segments);
+  geo.rotateX(-Math.PI / 2);
 
-  const TERRAIN_SIZE = 2200;
-  const TERRAIN_SEGMENTS = 260;
+  const pos = geo.attributes.position;
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i);
+    const z = pos.getZ(i);
+    const y = terrainHeightAt(x, z);
+    pos.setY(i, y);
+  }
+  geo.computeVertexNormals();
 
-  function getHeightAt(x, z) {
-    const base = (fbmNoise(x * 0.0022, z * 0.0022, 5) - 0.5) * 10.0;
-    const details = (fbmNoise((x + 300) * 0.007, (z - 190) * 0.007, 3) - 0.5) * 1.9;
-    const hills = (fbmNoise((x - 700) * 0.0012, (z + 120) * 0.0012, 4) - 0.5) * 20;
+  const mat = new THREE.MeshStandardMaterial({
+    color: 0xdbe3ea,
+    roughness: 0.95,
+    metalness: 0.02,
+  });
 
-    const flattenSite = Math.exp(-((x * x + z * z) / (900 * 900)));
-    const siteOffset = flattenSite * -2.2;
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.receiveShadow = true;
+  group.add(mesh);
 
-    return clamp(base + details + hills + siteOffset, -9, 18);
+  const iceGeo = new THREE.CircleGeometry(70, 48);
+  const iceMat = new THREE.MeshStandardMaterial({
+    color: 0xc7d8e8,
+    roughness: 0.3,
+    metalness: 0.1,
+    transparent: true,
+    opacity: 0.8,
+  });
+
+  for (const [x, z, r] of [
+    [-200, 280, 60],
+    [330, -380, 75],
+    [520, 250, 42],
+    [-560, -120, 58],
+  ]) {
+    const ice = new THREE.Mesh(iceGeo, iceMat);
+    ice.scale.setScalar(r / 70);
+    ice.rotation.x = -Math.PI / 2;
+    ice.position.set(x, terrainHeightAt(x, z) + 0.08, z);
+    group.add(ice);
   }
 
-  function createTerrain() {
-    const geometry = new THREE.PlaneGeometry(TERRAIN_SIZE, TERRAIN_SIZE, TERRAIN_SEGMENTS, TERRAIN_SEGMENTS);
-    geometry.rotateX(-Math.PI / 2);
-
-    const pos = geometry.attributes.position;
-    const colors = [];
-    const color = new THREE.Color();
-
-    for (let i = 0; i < pos.count; i++) {
-      const x = pos.getX(i);
-      const z = pos.getZ(i);
-      const h = getHeightAt(x, z);
-      pos.setY(i, h);
-
-      const n = (h + 10) / 28;
-      color.setRGB(
-        0.84 - n * 0.09,
-        0.88 - n * 0.07,
-        0.93 - n * 0.1
-      );
-
-      if (Math.abs(x) < 360 && Math.abs(z) < 260) {
-        color.lerp(new THREE.Color(0.75, 0.77, 0.79), 0.34);
-      }
-
-      colors.push(color.r, color.g, color.b);
-    }
-
-    geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
-    geometry.computeVertexNormals();
-
-    const material = new THREE.MeshStandardMaterial({
-      vertexColors: true,
-      roughness: 0.93,
-      metalness: 0.02,
-    });
-
-    const mesh = new THREE.Mesh(geometry, material);
-    mesh.receiveShadow = true;
-
-    return mesh;
-  }
-
-  return {
-    createTerrain,
-    getHeightAt,
-    TERRAIN_SIZE,
-  };
-})();
+  return group;
+}
