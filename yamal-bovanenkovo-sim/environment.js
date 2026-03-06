@@ -31,31 +31,38 @@ export function setupEnvironment(scene, renderer) {
   horizon.position.y = terrainHeightAt(0, 0) + 28;
   scene.add(horizon);
 
+  const presets = {
+    day: { bg: 0xaebfd0, fog: 0xb8c8d6, sunI: 0.95, sun: [-120, 220, 120], hemi: 0.8, amb: 0.35 },
+    dusk: { bg: 0x7f8fa2, fog: 0x8d9aab, sunI: 0.4, sun: [-80, 120, 30], hemi: 0.45, amb: 0.5 },
+  };
+
+  const applyMode = (mode) => {
+    const p = presets[mode];
+    scene.background.set(p.bg);
+    scene.fog.color.set(p.fog);
+    sun.intensity = p.sunI;
+    sun.position.set(p.sun[0], p.sun[1], p.sun[2]);
+    hemi.intensity = p.hemi;
+    ambient.intensity = p.amb;
+  };
+
   return {
     hemi,
     sun,
     ambient,
     mode: 'day',
+    autoCycleTime: 0,
+    getTimeLabel() {
+      return this.mode === 'day' ? 'ДЕНЬ' : 'СУМЕРКИ';
+    },
     toggleMode() {
-      if (this.mode === 'day') {
-        this.mode = 'dusk';
-        scene.background.set(0x7f8fa2);
-        scene.fog.color.set(0x8d9aab);
-        this.sun.intensity = 0.4;
-        this.sun.position.set(-80, 120, 30);
-        this.hemi.intensity = 0.45;
-        this.ambient.intensity = 0.5;
-      } else {
-        this.mode = 'day';
-        scene.background.set(0xaebfd0);
-        scene.fog.color.set(0xb8c8d6);
-        this.sun.intensity = 0.95;
-        this.sun.position.set(-120, 220, 120);
-        this.hemi.intensity = 0.8;
-        this.ambient.intensity = 0.35;
-      }
+      this.mode = this.mode === 'day' ? 'dusk' : 'day';
+      applyMode(this.mode);
+      this.autoCycleTime = 0;
     },
     update(dt) {
+      this.autoCycleTime += dt;
+      if (this.autoCycleTime > 210) this.toggleMode();
       const drift = Math.sin(performance.now() * 0.00003) * 6;
       this.sun.position.z = (this.mode === 'day' ? 120 : 30) + drift;
     },

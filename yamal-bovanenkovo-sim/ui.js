@@ -6,6 +6,8 @@ export function createUI({ onStart, onToggleTime }) {
   const zoneEl = document.getElementById('hud-zone');
   const statusEl = document.getElementById('hud-status');
   const coordsEl = document.getElementById('hud-coords');
+  const timeEl = document.getElementById('hud-time');
+  const weatherEl = document.getElementById('hud-weather');
   const toggleTime = document.getElementById('toggle-time');
 
   startBtn.addEventListener('click', () => {
@@ -16,11 +18,15 @@ export function createUI({ onStart, onToggleTime }) {
   toggleTime.addEventListener('click', onToggleTime);
 
   return {
-    updatePlayer(position) {
+    updatePlayer(position, worldInfo) {
       const zone = worldZoneLabel(position);
       zoneEl.textContent = `Zone: ${zone.zone}`;
       statusEl.textContent = `СТАТУС: ${zone.status}`;
       coordsEl.textContent = `X: ${position.x.toFixed(1)} | Y: ${position.y.toFixed(1)} | Z: ${position.z.toFixed(1)}`;
+      if (worldInfo) {
+        timeEl.textContent = `Освещение: ${worldInfo.timeLabel}`;
+        weatherEl.textContent = `Погода: ${worldInfo.weatherLabel}`;
+      }
     },
   };
 }

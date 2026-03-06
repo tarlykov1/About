@@ -42,7 +42,10 @@ function animate() {
   world.environment.update(dt);
   world.animals.update(dt);
   weather.update(dt, camera.position);
-  ui.updatePlayer(camera.position);
+  ui.updatePlayer(camera.position, {
+    timeLabel: world.environment.getTimeLabel(),
+    weatherLabel: weather.getWeatherLabel(),
+  });
 
   renderer.render(scene, camera);
   requestAnimationFrame(animate);

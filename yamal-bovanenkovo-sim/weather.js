@@ -29,8 +29,17 @@ export function createWeather(scene) {
   scene.add(points);
 
   let mode = 'light';
+  let gustPhase = 0;
+
+  const modeLabel = {
+    light: 'СЛАБЫЙ СНЕГ',
+    dense: 'ПОЗЕМКА',
+  };
 
   return {
+    getWeatherLabel() {
+      return modeLabel[mode];
+    },
     toggle() {
       mode = mode === 'light' ? 'dense' : 'light';
       mat.opacity = mode === 'light' ? 0.75 : 0.9;
@@ -40,7 +49,9 @@ export function createWeather(scene) {
     },
     update(dt, playerPos) {
       const p = geo.attributes.position;
-      const wind = mode === 'light' ? 2.2 : 4.2;
+      gustPhase += dt;
+      const gust = Math.sin(gustPhase * 0.35) * 0.8 + Math.cos(gustPhase * 0.21) * 0.6;
+      const wind = (mode === 'light' ? 2.2 : 4.2) + gust;
       for (let i = 0; i < flakesCount; i++) {
         const ix = i * 3;
         p.array[ix] += wind * dt;

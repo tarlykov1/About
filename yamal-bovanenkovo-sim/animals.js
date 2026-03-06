@@ -33,6 +33,7 @@ export function createAnimals() {
   const rng = seededRandom(202504);
   const group = new THREE.Group();
   const movers = [];
+  const dir = new THREE.Vector3();
 
   // rare foxes in outer zones
   for (let i = 0; i < 9; i++) {
@@ -69,7 +70,7 @@ export function createAnimals() {
           a.turnTimer = 4 + Math.random() * 8;
           a.mesh.rotation.y += (Math.random() - 0.5) * a.turnRate * 5;
         }
-        const dir = new THREE.Vector3(Math.sin(a.mesh.rotation.y), 0, Math.cos(a.mesh.rotation.y));
+        dir.set(Math.sin(a.mesh.rotation.y), 0, Math.cos(a.mesh.rotation.y));
         a.mesh.position.addScaledVector(dir, a.speed * dt);
         a.mesh.position.y = terrainHeightAt(a.mesh.position.x, a.mesh.position.z) + 0.05;
       });
