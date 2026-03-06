@@ -1,0 +1,118 @@
+:root {
+  --hud-bg: rgba(12, 18, 26, 0.65);
+  --hud-border: rgba(155, 178, 196, 0.4);
+  --text: #dbe7f2;
+  --accent: #d5af56;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: "Segoe UI", Tahoma, sans-serif;
+  background: #8ea2b6;
+  color: var(--text);
+}
+
+canvas {
+  display: block;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at center, rgba(14, 22, 30, 0.82), rgba(5, 9, 14, 0.94));
+  z-index: 20;
+}
+
+.overlay.visible {
+  display: flex;
+}
+
+.overlay-card {
+  width: min(760px, 92vw);
+  background: rgba(12, 18, 26, 0.92);
+  border: 1px solid var(--hud-border);
+  border-radius: 14px;
+  padding: 22px 24px;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.35);
+}
+
+.overlay-card h1 {
+  margin: 0 0 12px;
+  font-size: clamp(22px, 3vw, 34px);
+  color: #f0f5fb;
+}
+
+.overlay-card p,
+.overlay-card li,
+.overlay-card small {
+  color: #c8d6e4;
+}
+
+.overlay-card ul {
+  margin: 12px 0 16px;
+  padding-left: 18px;
+}
+
+#startBtn {
+  margin-top: 8px;
+  padding: 11px 18px;
+  border-radius: 10px;
+  border: 1px solid #8c9dae;
+  background: linear-gradient(180deg, #f2f6fb, #cbd9e8);
+  color: #152130;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#startBtn:hover {
+  filter: brightness(0.95);
+}
+
+.hud {
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  z-index: 12;
+  min-width: min(520px, 92vw);
+  background: var(--hud-bg);
+  border: 1px solid var(--hud-border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  backdrop-filter: blur(4px);
+}
+
+.hud-title {
+  color: #f0f6fd;
+  font-weight: 700;
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
+.hud-row {
+  color: #d0deec;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+#crosshair {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 11;
+  color: rgba(236, 241, 247, 0.75);
+  font-size: 19px;
+  user-select: none;
+  pointer-events: none;
+}
