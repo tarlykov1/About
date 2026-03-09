@@ -1,0 +1,409 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Лошадка с всадником — мини-игра</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #87ceeb;
+      --field: #7bc96f;
+      --text: #ffffff;
+      --panel: rgba(0, 0, 0, 0.3);
+      --accent: #ffe082;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100dvh;
+      display: grid;
+      place-items: center;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: radial-gradient(circle at top, #c5ecff 0, #74bfe9 60%, #4682b4 100%);
+      touch-action: manipulation;
+      user-select: none;
+    }
+
+    .game-wrap {
+      width: min(100vw, 430px);
+      padding: 12px;
+    }
+
+    .hud {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      color: var(--text);
+      background: var(--panel);
+      border-radius: 12px;
+      padding: 8px 10px;
+      margin-bottom: 8px;
+      font-weight: 600;
+      backdrop-filter: blur(6px);
+    }
+
+    canvas {
+      width: 100%;
+      border-radius: 14px;
+      display: block;
+      background: linear-gradient(to bottom, var(--bg) 0 65%, var(--field) 65% 100%);
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+      border: 2px solid rgba(255,255,255,.28);
+    }
+
+    .hint {
+      margin-top: 8px;
+      text-align: center;
+      color: #fff;
+      font-size: 14px;
+      text-shadow: 0 1px 2px rgba(0,0,0,.4);
+    }
+
+    .start {
+      color: var(--accent);
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <main class="game-wrap">
+    <section class="hud" aria-live="polite">
+      <div>Очки: <span id="score">0</span></div>
+      <div>Рекорд: <span id="best">0</span></div>
+      <div>Скорость: <span id="speed">1.0x</span></div>
+    </section>
+    <canvas id="game" width="390" height="640" aria-label="Игра: лошадка с всадником"></canvas>
+    <p class="hint"><span class="start">Тапни экран</span>, чтобы прыгнуть и перепрыгнуть препятствия.</p>
+  </main>
+
+  <script>
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+
+    const scoreEl = document.getElementById('score');
+    const bestEl = document.getElementById('best');
+    const speedEl = document.getElementById('speed');
+
+    const GROUND_Y = canvas.height * 0.72;
+    const horse = {
+      x: 72,
+      y: GROUND_Y,
+      width: 84,
+      height: 48,
+      vy: 0,
+      gravity: 0.95,
+      jumpForce: -16,
+      onGround: true,
+      bobTimer: 0
+    };
+
+    const game = {
+      running: true,
+      score: 0,
+      best: Number(localStorage.getItem('horseBest') || 0),
+      speed: 6,
+      obstacles: [],
+      clouds: [],
+      nextObstacleIn: 70,
+      frame: 0,
+      message: 'Старт!'
+    };
+
+    bestEl.textContent = game.best;
+
+    for (let i = 0; i < 4; i++) {
+      game.clouds.push({
+        x: Math.random() * canvas.width,
+        y: 50 + Math.random() * 160,
+        w: 45 + Math.random() * 55,
+        s: 0.3 + Math.random() * 0.5
+      });
+    }
+
+    function spawnObstacle() {
+      const h = 34 + Math.random() * 34;
+      const w = 22 + Math.random() * 26;
+      game.obstacles.push({
+        x: canvas.width + 20,
+        y: GROUND_Y - h,
+        w,
+        h
+      });
+      game.nextObstacleIn = 55 + Math.random() * 70;
+    }
+
+    function jump() {
+      if (!game.running) {
+        restart();
+        return;
+      }
+      if (horse.onGround) {
+        horse.vy = horse.jumpForce;
+        horse.onGround = false;
+      }
+    }
+
+    function restart() {
+      game.running = true;
+      game.score = 0;
+      game.speed = 6;
+      game.obstacles.length = 0;
+      game.nextObstacleIn = 50;
+      horse.y = GROUND_Y;
+      horse.vy = 0;
+      horse.onGround = true;
+      game.message = 'Поехали!';
+    }
+
+    function intersects(a, b) {
+      return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+    }
+
+    function update() {
+      game.frame += 1;
+
+      game.clouds.forEach(cloud => {
+        cloud.x -= cloud.s;
+        if (cloud.x + cloud.w < 0) {
+          cloud.x = canvas.width + 10;
+          cloud.y = 50 + Math.random() * 160;
+        }
+      });
+
+      if (game.running) {
+        game.score += 1;
+        game.speed = 6 + Math.min(6, game.score / 600);
+
+        horse.vy += horse.gravity;
+        horse.y += horse.vy;
+
+        if (horse.y >= GROUND_Y) {
+          horse.y = GROUND_Y;
+          horse.vy = 0;
+          horse.onGround = true;
+        }
+
+        horse.bobTimer += 0.18;
+        game.nextObstacleIn -= 1;
+        if (game.nextObstacleIn <= 0) spawnObstacle();
+
+        game.obstacles.forEach(ob => { ob.x -= game.speed; });
+        game.obstacles = game.obstacles.filter(ob => ob.x + ob.w > -20);
+
+        const hitbox = {
+          x: horse.x + 10,
+          y: horse.y - horse.height + 6,
+          w: horse.width - 18,
+          h: horse.height - 8
+        };
+
+        for (const ob of game.obstacles) {
+          if (intersects(hitbox, ob)) {
+            game.running = false;
+            game.message = 'Столкновение! Тап для рестарта';
+            if (game.score > game.best) {
+              game.best = game.score;
+              localStorage.setItem('horseBest', game.best);
+              bestEl.textContent = game.best;
+            }
+            break;
+          }
+        }
+      }
+
+      scoreEl.textContent = game.score;
+      speedEl.textContent = (game.speed / 6).toFixed(1) + 'x';
+    }
+
+    function drawHorse() {
+      const bob = horse.onGround ? Math.sin(horse.bobTimer) * 2 : 0;
+      const yTop = horse.y - horse.height + bob;
+      const gallop = Math.sin(game.frame * 0.36);
+      const legShift = horse.onGround ? gallop * 6 : -5;
+      const x = horse.x + 8;
+      const y = yTop - 2;
+
+      // horse body contour (close to reference silhouette)
+      ctx.fillStyle = '#c98949';
+      ctx.beginPath();
+      ctx.moveTo(x + 6, y + 30);
+      ctx.quadraticCurveTo(x + 16, y + 12, x + 38, y + 10);
+      ctx.quadraticCurveTo(x + 66, y + 8, x + 84, y + 22);
+      ctx.quadraticCurveTo(x + 92, y + 28, x + 94, y + 35);
+      ctx.quadraticCurveTo(x + 104, y + 34, x + 112, y + 40);
+      ctx.quadraticCurveTo(x + 120, y + 48, x + 116, y + 58);
+      ctx.quadraticCurveTo(x + 108, y + 72, x + 92, y + 66);
+      ctx.quadraticCurveTo(x + 84, y + 64, x + 72, y + 66);
+      ctx.quadraticCurveTo(x + 58, y + 68, x + 46, y + 66);
+      ctx.quadraticCurveTo(x + 26, y + 64, x + 14, y + 56);
+      ctx.quadraticCurveTo(x + 2, y + 46, x + 6, y + 30);
+      ctx.closePath();
+      ctx.fill();
+
+      // neck + head
+      ctx.beginPath();
+      ctx.moveTo(x + 8, y + 30);
+      ctx.quadraticCurveTo(x + 2, y + 25, x - 4, y + 20);
+      ctx.quadraticCurveTo(x - 12, y + 15, x - 14, y + 22);
+      ctx.quadraticCurveTo(x - 16, y + 28, x - 8, y + 34);
+      ctx.quadraticCurveTo(x + 2, y + 36, x + 8, y + 30);
+      ctx.closePath();
+      ctx.fill();
+
+      // ears + tail
+      ctx.beginPath();
+      ctx.moveTo(x - 2, y + 16);
+      ctx.lineTo(x + 2, y + 8);
+      ctx.lineTo(x + 6, y + 18);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(x + 112, y + 40);
+      ctx.quadraticCurveTo(x + 128, y + 38, x + 132, y + 58);
+      ctx.quadraticCurveTo(x + 122, y + 48, x + 112, y + 50);
+      ctx.closePath();
+      ctx.fill();
+
+      // legs
+      ctx.fillStyle = '#b5793f';
+      const legBaseY = y + 64;
+      ctx.save();
+      ctx.translate(x + 20, legBaseY);
+      ctx.rotate((-26 + legShift) * Math.PI / 180);
+      ctx.fillRect(-4, 0, 8, 24);
+      ctx.restore();
+
+      ctx.save();
+      ctx.translate(x + 40, legBaseY - 2);
+      ctx.rotate((-70 - legShift) * Math.PI / 180);
+      ctx.fillRect(-4, 0, 8, 26);
+      ctx.restore();
+
+      ctx.save();
+      ctx.translate(x + 64, legBaseY - 2);
+      ctx.rotate((42 + legShift) * Math.PI / 180);
+      ctx.fillRect(-4, 0, 8, 24);
+      ctx.restore();
+
+      ctx.save();
+      ctx.translate(x + 82, legBaseY - 4);
+      ctx.rotate((12 - legShift * 0.7) * Math.PI / 180);
+      ctx.fillRect(-4, 0, 8, 24);
+      ctx.restore();
+
+      // rider silhouette similar to reference
+      ctx.fillStyle = '#8f8f8f';
+      ctx.beginPath();
+      ctx.ellipse(x + 52, y + 22, 18, 12, -0.25, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(x + 38, y + 15, 8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(x + 40, y + 22);
+      ctx.quadraticCurveTo(x + 54, y + 30, x + 58, y + 40);
+      ctx.lineTo(x + 53, y + 44);
+      ctx.quadraticCurveTo(x + 48, y + 36, x + 36, y + 30);
+      ctx.closePath();
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(x + 57, y + 34);
+      ctx.quadraticCurveTo(x + 64, y + 46, x + 58, y + 58);
+      ctx.lineTo(x + 52, y + 56);
+      ctx.quadraticCurveTo(x + 56, y + 46, x + 50, y + 36);
+      ctx.closePath();
+      ctx.fill();
+
+      // eye + reins
+      ctx.fillStyle = '#111';
+      ctx.beginPath();
+      ctx.arc(x - 8, y + 24, 1.8, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#2f1b0d';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(x + 36, y + 31);
+      ctx.lineTo(x - 4, y + 28);
+      ctx.stroke();
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      game.clouds.forEach(cloud => {
+        ctx.fillStyle = 'rgba(255,255,255,.9)';
+        ctx.beginPath();
+        ctx.ellipse(cloud.x, cloud.y, cloud.w * 0.4, 16, 0, 0, Math.PI * 2);
+        ctx.ellipse(cloud.x + cloud.w * 0.2, cloud.y - 8, cloud.w * 0.3, 14, 0, 0, Math.PI * 2);
+        ctx.ellipse(cloud.x + cloud.w * 0.5, cloud.y, cloud.w * 0.35, 15, 0, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      ctx.fillStyle = '#5eaa4f';
+      ctx.fillRect(0, GROUND_Y + 2, canvas.width, canvas.height - GROUND_Y);
+
+      // scrolling grass strips
+      const offset = (game.frame * game.speed * 0.4) % 40;
+      ctx.fillStyle = '#4d913f';
+      for (let x = -offset; x < canvas.width; x += 40) {
+        ctx.fillRect(x, GROUND_Y + 2, 24, 6);
+      }
+
+      drawHorse();
+
+      game.obstacles.forEach(ob => {
+        const left = ob.x;
+        const right = ob.x + ob.w;
+        const baseY = GROUND_Y;
+
+        // show-jumping standards
+        ctx.fillStyle = '#f4f0e6';
+        ctx.fillRect(left - 6, baseY - ob.h - 12, 8, ob.h + 12);
+        ctx.fillRect(right - 2, baseY - ob.h - 12, 8, ob.h + 12);
+        ctx.fillStyle = '#cfcbc2';
+        ctx.fillRect(left - 8, baseY - 8, 12, 8);
+        ctx.fillRect(right - 4, baseY - 8, 12, 8);
+
+        // colored poles
+        const poleGap = 11;
+        for (let i = 0; i < 3; i++) {
+          const y = baseY - 18 - i * poleGap;
+          ctx.fillStyle = i % 2 ? '#b9382f' : '#ffffff';
+          ctx.fillRect(left + 1, y, ob.w - 2, 5);
+          ctx.fillStyle = '#2b2b2b';
+          ctx.fillRect(left + 1 + (game.frame % 10), y, 6, 5);
+        }
+      });
+
+      if (!game.running) {
+        ctx.fillStyle = 'rgba(0,0,0,.45)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#fff3c4';
+        ctx.font = 'bold 28px system-ui';
+        ctx.textAlign = 'center';
+        ctx.fillText('Игра окончена', canvas.width / 2, canvas.height / 2 - 14);
+        ctx.font = '600 18px system-ui';
+        ctx.fillText(game.message, canvas.width / 2, canvas.height / 2 + 20);
+      }
+    }
+
+    function loop() {
+      update();
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    canvas.addEventListener('pointerdown', jump);
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' || e.code === 'ArrowUp') {
+        e.preventDefault();
+        jump();
+      }
+    });
+
+    loop();
+  </script>
+</body>
+</html>

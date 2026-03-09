@@ -20,3 +20,6 @@
 - Хочу научиться программировать на Питоне
 
 _Со мной можно связаться по почте [tarlykov@gmail.com](tarlykov@gmail.com)._
+## Мини-игра
+- [▶️ Играть на телефоне](https://raw.githack.com/tarlykov1/About/main/horse-runner.html)
+- [Исходник игры](horse-runner.html)
