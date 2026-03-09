@@ -197,10 +197,10 @@
         game.obstacles = game.obstacles.filter(ob => ob.x + ob.w > -20);
 
         const hitbox = {
-          x: horse.x + 14,
-          y: horse.y - horse.height + 5,
-          w: horse.width - 18,
-          h: horse.height - 8
+          x: horse.x + 16,
+          y: horse.y - horse.height + 6,
+          w: horse.width - 22,
+          h: horse.height - 10
         };
 
         for (const ob of game.obstacles) {
@@ -225,17 +225,17 @@
       const bob = horse.onGround ? Math.sin(horse.bobTimer) * 1.4 : 0;
       const gallop = Math.sin(game.frame * 0.32);
 
-      const spriteW = 206;
-      const spriteH = 108;
-      const drawX = horse.x - 64;
-      const drawY = horse.y - 90 + bob;
+      const spriteW = 214;
+      const spriteH = 112;
+      const drawX = horse.x - 26;
+      const drawY = horse.y - 92 + bob;
 
       if (!(horseSprite.complete && horseSprite.naturalWidth > 0)) return;
 
       ctx.save();
-      ctx.translate(drawX + spriteW * 0.52, drawY + spriteH * 0.62);
+      ctx.translate(drawX + spriteW * 0.34, drawY + spriteH * 0.63);
       ctx.rotate(gallop * 0.015);
-      ctx.translate(-spriteW * 0.52, -spriteH * 0.62);
+      ctx.translate(-spriteW * 0.34, -spriteH * 0.63);
       ctx.drawImage(horseSprite, 0, 0, horseSprite.naturalWidth, horseSprite.naturalHeight, 0, 0, spriteW, spriteH);
       ctx.restore();
     }

@@ -1,73 +1,82 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 220" role="img" aria-label="Horse and rider sprite">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 230" role="img" aria-label="Horse and rider sprite facing right">
   <defs>
     <style>
-      .horse-main { fill: #c78546; }
-      .horse-mid { fill: #b6733f; }
-      .horse-dark { fill: #9b5d31; }
-      .accent { fill: #1a1a1a; }
-      .rider { fill: #8f8f8f; }
-      .rider-dark { fill: #6f6f6f; }
+      .horse-main { fill: #c68445; }
+      .horse-mid { fill: #b8743e; }
+      .horse-dark { fill: #975a31; }
+      .rider-main { fill: #8f8f8f; }
+      .rider-dark { fill: #6e6e6e; }
+      .line-dark { fill: #1a1a1a; }
     </style>
   </defs>
 
   <!-- tail -->
-  <path class="horse-main" d="M330 124 C354 118 377 127 392 146 C377 140 364 144 352 150 C365 157 374 168 379 182 C360 170 344 161 326 160 Z"/>
+  <path class="horse-main" d="M88 138 C61 132 40 141 28 158 C43 153 57 156 69 164 C54 171 44 182 39 197 C57 184 74 175 93 174 Z"/>
 
-  <!-- body -->
-  <path class="horse-main" d="M116 86
-    C154 68 207 64 263 74
-    C292 80 314 94 326 113
-    C338 132 337 149 324 162
-    C307 176 276 184 238 185
-    C196 186 156 181 129 167
-    C108 156 96 138 97 120
-    C97 104 102 93 116 86 Z"/>
+  <!-- body main silhouette -->
+  <path class="horse-main" d="M109 98
+    C145 80 204 74 264 81
+    C306 86 339 101 359 124
+    C375 143 377 163 362 177
+    C346 191 314 201 272 204
+    C224 206 182 201 148 190
+    C123 182 106 170 100 152
+    C94 132 97 112 109 98 Z"/>
 
   <!-- topline/chest accents -->
-  <path class="horse-mid" d="M132 92 C173 80 229 79 278 92 C264 87 241 84 213 84 C184 84 156 87 132 92 Z"/>
-  <path class="horse-mid" d="M104 121 C114 108 129 98 147 92 C130 104 120 118 117 132 C111 130 107 126 104 121 Z"/>
+  <path class="horse-mid" d="M130 100 C177 88 236 86 294 96 C261 88 197 87 130 100 Z"/>
+  <path class="horse-mid" d="M112 153 C115 135 126 118 145 104 C130 121 124 140 126 160 C121 159 116 157 112 153 Z"/>
 
   <!-- neck -->
-  <path class="horse-main" d="M111 86 C96 83 82 86 68 95 C56 103 50 117 53 129 C56 140 66 145 79 143 C95 140 108 129 116 114 C122 103 123 91 111 86 Z"/>
+  <path class="horse-main" d="M348 123 C366 120 382 112 394 98 C404 86 409 72 405 61 C400 51 388 50 374 56 C359 62 346 74 339 91 C332 104 334 118 348 123 Z"/>
 
   <!-- head -->
-  <path class="horse-main" d="M55 96 C40 99 30 110 29 123 C28 137 39 147 56 149 C71 150 84 143 91 132 C96 123 94 111 85 103 C77 97 66 94 55 96 Z"/>
+  <path class="horse-main" d="M394 97 C408 92 420 81 424 68 C429 54 421 43 406 40 C390 37 372 45 363 58 C355 70 356 82 366 90 C374 96 384 99 394 97 Z"/>
 
-  <!-- ear + face details -->
-  <path class="horse-main" d="M70 96 L76 82 L84 96 Z"/>
-  <circle class="accent" cx="63" cy="122" r="4"/>
-  <path class="horse-dark" d="M53 133 C60 136 69 136 77 132 C70 140 60 141 53 133 Z"/>
+  <!-- ear -->
+  <path class="horse-main" d="M392 46 L399 33 L406 46 Z"/>
+
+  <!-- eye / muzzle -->
+  <path class="line-dark" d="M397 62 C401 62 404 65 404 68 C401 70 398 70 395 68 C395 66 396 63 397 62 Z"/>
+  <path class="horse-dark" d="M410 80 C402 84 393 85 385 83 C392 91 403 92 410 87 Z"/>
 
   <!-- mane -->
-  <path class="horse-dark" d="M110 88 C100 93 91 102 86 113 C82 123 82 132 87 139 C88 126 93 112 105 99 C113 90 119 86 110 88 Z"/>
+  <path class="horse-dark" d="M346 122 C356 116 366 106 374 94 C381 83 384 73 382 64 C373 79 359 94 343 104 C335 110 336 117 346 122 Z"/>
 
-  <!-- front legs -->
-  <path class="horse-main" d="M152 162 C146 177 144 195 148 210 C150 218 158 219 162 212 C166 205 164 194 164 182 C173 175 179 167 178 157 Z"/>
-  <path class="horse-mid" d="M182 162 C177 176 177 190 180 203 C183 212 191 213 196 206 C200 200 200 191 197 181 C207 174 214 166 213 157 Z"/>
+  <!-- front leg near -->
+  <path class="horse-main" d="M300 182 C311 193 322 206 331 220 C336 227 345 225 347 217 C350 206 342 191 329 178 C320 169 310 164 302 167 Z"/>
 
-  <!-- rear legs -->
-  <path class="horse-main" d="M252 166 C244 175 234 184 224 193 C217 199 218 209 227 210 C241 212 257 202 267 188 C275 177 278 166 272 158 Z"/>
-  <path class="horse-mid" d="M286 164 C282 176 282 193 286 208 C289 217 298 218 304 211 C309 205 308 196 304 185 C314 177 321 168 320 159 Z"/>
+  <!-- front leg far -->
+  <path class="horse-mid" d="M267 183 C277 195 286 208 293 221 C297 228 305 227 308 220 C312 210 305 197 293 184 C284 175 274 169 267 171 Z"/>
+
+  <!-- back leg near -->
+  <path class="horse-main" d="M188 186 C181 202 178 219 182 233 C184 240 193 241 197 234 C201 226 200 214 200 201 C210 193 216 183 215 172 Z"/>
+
+  <!-- back leg far -->
+  <path class="horse-mid" d="M155 183 C149 198 147 215 151 229 C153 237 161 238 166 231 C171 224 169 212 169 199 C178 191 184 182 183 171 Z"/>
 
   <!-- hooves -->
-  <path class="horse-dark" d="M148 207 C154 204 160 204 165 207 C160 214 152 215 148 212 Z"/>
-  <path class="horse-dark" d="M180 201 C186 198 193 198 198 201 C193 208 185 209 180 206 Z"/>
-  <path class="horse-dark" d="M224 205 C234 201 246 201 255 205 C248 212 235 214 226 211 Z"/>
-  <path class="horse-dark" d="M286 206 C292 202 300 202 306 206 C300 213 291 214 286 211 Z"/>
+  <path class="horse-dark" d="M330 217 C337 214 346 214 352 218 C346 225 337 226 331 223 Z"/>
+  <path class="horse-dark" d="M293 219 C300 216 307 216 312 220 C306 226 299 227 293 224 Z"/>
+  <path class="horse-dark" d="M182 231 C188 228 196 228 202 231 C196 238 188 239 182 236 Z"/>
+  <path class="horse-dark" d="M151 227 C157 224 165 224 170 227 C164 234 156 235 151 232 Z"/>
+
+  <!-- saddle pad -->
+  <path class="horse-mid" d="M210 103 C232 95 260 95 282 103 C275 112 260 117 240 118 C223 118 212 112 210 103 Z"/>
 
   <!-- rider torso -->
-  <path class="rider" d="M186 62 C200 49 225 45 248 50 C269 54 284 68 286 83 C288 97 276 106 255 108 C232 110 204 104 191 92 C179 83 177 72 186 62 Z"/>
+  <path class="rider-main" d="M205 80 C221 67 247 63 272 67 C291 70 304 80 307 93 C309 104 300 112 283 115 C260 120 230 116 214 105 C200 96 196 88 205 80 Z"/>
 
   <!-- rider head -->
-  <path class="rider" d="M157 59 C156 47 166 38 179 37 C193 36 204 44 205 56 C206 67 197 77 184 78 C170 79 158 71 157 59 Z"/>
+  <path class="rider-main" d="M177 73 C176 62 186 53 199 52 C212 51 223 59 224 71 C225 82 216 91 202 92 C189 93 178 84 177 73 Z"/>
 
   <!-- rider arm -->
-  <path class="rider" d="M188 93 C177 100 162 104 147 106 C138 107 134 114 136 121 C138 128 146 131 155 129 C173 125 189 117 198 105 Z"/>
+  <path class="rider-main" d="M236 108 C253 107 271 104 287 98 C295 95 302 99 304 106 C305 112 301 118 293 121 C274 127 252 129 233 123 Z"/>
 
   <!-- rider leg -->
-  <path class="rider" d="M243 99 C252 113 252 130 243 148 C238 158 240 166 247 170 C255 174 267 170 273 160 C286 138 288 112 275 92 Z"/>
+  <path class="rider-main" d="M282 110 C295 124 298 143 291 163 C288 172 291 179 298 181 C307 184 316 179 321 169 C331 146 328 122 312 104 Z"/>
 
-  <!-- subtle separation accents -->
-  <path class="rider-dark" d="M140 121 C147 115 156 113 164 116 C156 124 148 126 140 124 Z"/>
-  <path class="rider-dark" d="M247 164 C255 158 264 156 272 159 C264 167 254 170 247 168 Z"/>
+  <!-- rider accents -->
+  <path class="rider-dark" d="M235 121 C246 120 259 118 271 113 C263 123 250 128 238 128 Z"/>
+  <path class="rider-dark" d="M297 175 C304 170 312 168 319 170 C313 178 304 182 297 180 Z"/>
 </svg>
