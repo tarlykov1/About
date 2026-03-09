@@ -197,10 +197,10 @@
         game.obstacles = game.obstacles.filter(ob => ob.x + ob.w > -20);
 
         const hitbox = {
-          x: horse.x + 8,
-          y: horse.y - horse.height + 2,
-          w: horse.width - 10,
-          h: horse.height - 2
+          x: horse.x + 14,
+          y: horse.y - horse.height + 5,
+          w: horse.width - 18,
+          h: horse.height - 8
         };
 
         for (const ob of game.obstacles) {
@@ -222,33 +222,22 @@
     }
 
     function drawHorse() {
-      const bob = horse.onGround ? Math.sin(horse.bobTimer) * 1.8 : 0;
-      const gallop = Math.sin(game.frame * 0.34);
+      const bob = horse.onGround ? Math.sin(horse.bobTimer) * 1.4 : 0;
+      const gallop = Math.sin(game.frame * 0.32);
 
-      const spriteW = 176;
+      const spriteW = 206;
       const spriteH = 108;
-      const drawX = horse.x - 46;
-      const drawY = horse.y - 88 + bob;
+      const drawX = horse.x - 64;
+      const drawY = horse.y - 90 + bob;
 
-      if (horseSprite.complete && horseSprite.naturalWidth > 0) {
-        ctx.save();
-        ctx.translate(drawX + spriteW * 0.5, drawY + spriteH * 0.58);
-        ctx.rotate(gallop * 0.02);
-        ctx.translate(-spriteW * 0.5, -spriteH * 0.58);
-        ctx.drawImage(horseSprite, 0, 0, horseSprite.naturalWidth, horseSprite.naturalHeight, 0, 0, spriteW, spriteH);
-        ctx.restore();
-      } else {
-        // fallback silhouette while SVG loads
-        ctx.fillStyle = '#c98949';
-        ctx.beginPath();
-        ctx.moveTo(horse.x - 24, horse.y - 42 + bob);
-        ctx.quadraticCurveTo(horse.x + 22, horse.y - 72 + bob, horse.x + 82, horse.y - 42 + bob);
-        ctx.quadraticCurveTo(horse.x + 106, horse.y - 26 + bob, horse.x + 96, horse.y - 10 + bob);
-        ctx.quadraticCurveTo(horse.x + 74, horse.y + 3 + bob, horse.x + 38, horse.y - 2 + bob);
-        ctx.quadraticCurveTo(horse.x + 4, horse.y + 1 + bob, horse.x - 20, horse.y - 12 + bob);
-        ctx.closePath();
-        ctx.fill();
-      }
+      if (!(horseSprite.complete && horseSprite.naturalWidth > 0)) return;
+
+      ctx.save();
+      ctx.translate(drawX + spriteW * 0.52, drawY + spriteH * 0.62);
+      ctx.rotate(gallop * 0.015);
+      ctx.translate(-spriteW * 0.52, -spriteH * 0.62);
+      ctx.drawImage(horseSprite, 0, 0, horseSprite.naturalWidth, horseSprite.naturalHeight, 0, 0, spriteW, spriteH);
+      ctx.restore();
     }
 
     function draw() {
