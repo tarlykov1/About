@@ -20,3 +20,7 @@
 - Хочу научиться программировать на Питоне
 
 _Со мной можно связаться по почте [tarlykov@gmail.com](tarlykov@gmail.com)._
+## Тестовая версия 3D-симулятора
+- Открыть в браузере: https://www.gsprom.ru/About-main/yamal-bovanenkovo-sim/?v=test
+- Исходники симулятора: [yamal-bovanenkovo-sim](./yamal-bovanenkovo-sim)
+
