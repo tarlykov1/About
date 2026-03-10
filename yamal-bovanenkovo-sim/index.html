@@ -20,7 +20,7 @@
       <button id="toggle-time" class="hud__btn">Сменить режим освещения</button>
     </div>
 
-    <div id="start-overlay" class="overlay">
+    <div id="start-overlay" class="overlay overlay--hidden">
       <div class="overlay__card">
         <h1>Yamal / Бованенково</h1>
         <p>
@@ -33,10 +33,12 @@
           <li>Space — прыжок</li>
           <li>Мышь — обзор (Pointer Lock)</li>
         </ul>
-        <button id="start-btn" class="overlay__start">Начать</button>
+        <div class="overlay__line">Автостарт включен</div>
+        <button id="start-btn" class="overlay__start" type="button" style="display: none">Начать</button>
       </div>
     </div>
 
+    <script defer src="./start-fallback.js"></script>
     <script type="module" src="./main.js"></script>
   </body>
 </html>

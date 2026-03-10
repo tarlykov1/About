@@ -15,11 +15,11 @@ const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.8));
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.domElement.tabIndex = 0;
 app.appendChild(renderer.domElement);
 
 const world = buildWorld(scene, renderer);
 const controls = createPlayerControls(camera, renderer.domElement);
-scene.add(controls.controls.getObject());
 
 const weather = createWeather(scene);
 const ui = createUI({
@@ -28,6 +28,7 @@ const ui = createUI({
     world.environment.toggleMode();
     weather.toggle();
   },
+  autoStart: true,
 });
 
 const clock = new THREE.Clock();
@@ -35,7 +36,7 @@ const clock = new THREE.Clock();
 function animate() {
   const dt = Math.min(clock.getDelta(), 0.05);
 
-  if (controls.controls.isLocked) {
+  if (controls.isLocked) {
     controls.update(dt);
   }
 

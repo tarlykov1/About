@@ -2,16 +2,16 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.m
 import { terrainHeightAt } from './utils.js';
 
 export function setupEnvironment(scene, renderer) {
-  scene.background = new THREE.Color(0xaebfd0);
-  scene.fog = new THREE.Fog(0xb8c8d6, 200, 980);
+  scene.background = new THREE.Color(0xa8b8c4);
+  scene.fog = new THREE.Fog(0xb0c0cc, 170, 900);
 
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-  const hemi = new THREE.HemisphereLight(0xd8e5f2, 0x56626f, 0.8);
+  const hemi = new THREE.HemisphereLight(0xd4e0eb, 0x515d68, 0.75);
   scene.add(hemi);
 
-  const sun = new THREE.DirectionalLight(0xe6edf4, 0.95);
+  const sun = new THREE.DirectionalLight(0xe4ebf2, 0.82);
   sun.position.set(-120, 220, 120);
   sun.castShadow = true;
   sun.shadow.mapSize.set(2048, 2048);
@@ -21,7 +21,7 @@ export function setupEnvironment(scene, renderer) {
   sun.shadow.camera.bottom = -300;
   scene.add(sun);
 
-  const ambient = new THREE.AmbientLight(0x8f9fb0, 0.35);
+  const ambient = new THREE.AmbientLight(0x8193a5, 0.4);
   scene.add(ambient);
 
   const horizon = new THREE.Mesh(
@@ -32,8 +32,8 @@ export function setupEnvironment(scene, renderer) {
   scene.add(horizon);
 
   const presets = {
-    day: { bg: 0xaebfd0, fog: 0xb8c8d6, sunI: 0.95, sun: [-120, 220, 120], hemi: 0.8, amb: 0.35 },
-    dusk: { bg: 0x7f8fa2, fog: 0x8d9aab, sunI: 0.4, sun: [-80, 120, 30], hemi: 0.45, amb: 0.5 },
+    day: { bg: 0xa8b8c4, fog: 0xb0c0cc, sunI: 0.82, sun: [-120, 220, 120], hemi: 0.75, amb: 0.4 },
+    dusk: { bg: 0x7d8896, fog: 0x8896a3, sunI: 0.38, sun: [-80, 120, 30], hemi: 0.42, amb: 0.46 },
   };
 
   const applyMode = (mode) => {

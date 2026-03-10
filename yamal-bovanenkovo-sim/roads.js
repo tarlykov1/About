@@ -1,7 +1,7 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.163.0/build/three.module.js';
 import { terrainHeightAt } from './utils.js';
 
-function roadSegment(width, length, color = 0xaeb5bb) {
+function roadSegment(width, length, color = 0x898f92) {
   const mesh = new THREE.Mesh(
     new THREE.PlaneGeometry(width, length),
     new THREE.MeshStandardMaterial({ color, roughness: 1, metalness: 0 })
@@ -23,14 +23,14 @@ export function createRoadNetwork() {
   ];
 
   defs.forEach((d) => {
-    const s = roadSegment(d.w, d.l, 0xaab1b5);
+    const s = roadSegment(d.w, d.l, 0x8a8f92);
     s.position.set(d.x, terrainHeightAt(d.x, d.z) + 0.14, d.z);
     s.rotation.y = d.r;
     group.add(s);
   });
 
   // wheel tracks in tundra
-  const trackMat = new THREE.MeshStandardMaterial({ color: 0x96a0a7, roughness: 1 });
+  const trackMat = new THREE.MeshStandardMaterial({ color: 0x747b7f, roughness: 1 });
   for (let i = 0; i < 22; i++) {
     const z = -340 + i * 45;
     const x = 430 + Math.sin(i * 0.7) * 28;
