@@ -88,7 +88,7 @@
     const speedEl = document.getElementById('speed');
 
     const horseSprite = new Image();
-    horseSprite.src = 'horse_rider.svg';
+    horseSprite.src = 'equestrian.svg';
 
     const GROUND_Y = canvas.height * 0.72;
     const horse = {
@@ -225,10 +225,10 @@
       const bob = horse.onGround ? Math.sin(horse.bobTimer) * 1.4 : 0;
       const gallop = Math.sin(game.frame * 0.32);
 
-      const spriteW = 214;
-      const spriteH = 112;
-      const drawX = horse.x - 26;
-      const drawY = horse.y - 92 + bob;
+      const spriteW = 92;
+      const spriteH = 92;
+      const drawX = horse.x - 6;
+      const drawY = horse.y - 82 + bob;
 
       if (!(horseSprite.complete && horseSprite.naturalWidth > 0)) return;
 
