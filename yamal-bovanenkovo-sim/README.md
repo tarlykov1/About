@@ -3,6 +3,7 @@
 Браузерный симулятор перемещения от первого лица по арктической строительной зоне (Ямал / Бованенково) на чистых HTML/CSS/JS + Three.js через CDN.
 
 ## Тестовая версия на базе репозитория
+- Онлайн-превью: https://rawcdn.githack.com/tarlykov1/About/main/yamal-bovanenkovo-sim/index.html
 - Локальное превью: http://localhost:8000
 - Запуск из корня репозитория: `cd yamal-bovanenkovo-sim && python3 -m http.server 8000`
 

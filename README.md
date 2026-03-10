@@ -29,6 +29,6 @@ _Со мной можно связаться по почте [tarlykov@gmail.com
 ▶️ Играть на телефоне https://htmlpreview.github.io/?https://raw.githubusercontent.com/tarlykov1/About/main/horse-runner.html
 Исходник игры: [horse-runner.html](./horse-runner.html)
 
-## 3D-симулятор (аналогичная ссылка-превью)
-▶️ Открыть превью в браузере https://htmlpreview.github.io/?https://raw.githubusercontent.com/tarlykov1/About/main/yamal-bovanenkovo-sim/index.html
+## 3D-симулятор (рабочее превью из репозитория)
+▶️ Открыть превью в браузере https://rawcdn.githack.com/tarlykov1/About/main/yamal-bovanenkovo-sim/index.html
 Исходник симулятора: [yamal-bovanenkovo-sim/index.html](./yamal-bovanenkovo-sim/index.html)
