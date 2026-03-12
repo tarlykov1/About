@@ -153,7 +153,7 @@
         </section>
       </div>
     </div>
-    <p class="hint"><span class="start">Старт</span> — кнопкой, в прыжке собирай подковы (не всегда безопасно).</p>
+    <p class="hint"><span class="start">Старт</span> — кнопкой, в прыжке собирай подковы и избегай ежей.</p>
   </main>
 
   <script>
@@ -223,7 +223,8 @@
       const h = 34 + Math.random() * 34;
       const w = 22 + Math.random() * 26;
       const isBird = Math.random() < Math.min(0.45, 0.2 + game.score / 4500);
-      const isTallFence = !isBird && Math.random() < Math.min(0.28, 0.08 + game.score / 6000);
+      const isHedgehog = !isBird && Math.random() < Math.min(0.22, 0.06 + game.score / 7500);
+      const isTallFence = !isBird && !isHedgehog && Math.random() < Math.min(0.28, 0.08 + game.score / 6000);
       if (isBird) {
         const birdY = GROUND_Y - (horse.height + 25 + Math.random() * 70);
         game.obstacles.push({
@@ -252,6 +253,20 @@
         return;
       }
 
+      if (isHedgehog) {
+        const hedgehogW = 34 + Math.random() * 10;
+        const hedgehogH = 28 + Math.random() * 8;
+        game.obstacles.push({
+          type: 'hedgehog',
+          x: canvas.width + 20,
+          y: GROUND_Y - hedgehogH + 2,
+          w: hedgehogW,
+          h: hedgehogH
+        });
+        game.nextObstacleIn = 44 + Math.random() * 56;
+        return;
+      }
+
       game.obstacles.push({
         type: 'fence',
         x: canvas.width + 20,
@@ -263,22 +278,30 @@
     }
 
     function spawnHorseshoe() {
-      let prizeX = canvas.width + 30;
+      let baseX = canvas.width + 30;
       const lastObstacle = game.obstacles[game.obstacles.length - 1];
       if (lastObstacle && lastObstacle.x > canvas.width * 0.52) {
-        prizeX = lastObstacle.x + lastObstacle.w + 12 + Math.random() * 28;
+        baseX = lastObstacle.x + lastObstacle.w + 12 + Math.random() * 28;
       }
 
-      const minY = GROUND_Y - (horse.height + 108);
-      const maxY = GROUND_Y - (horse.height + 24);
-      game.prizes.push({
-        x: prizeX,
-        y: minY + Math.random() * (maxY - minY),
-        w: 18,
-        h: 20,
-        spin: Math.random() * Math.PI * 2
-      });
-      game.nextPrizeIn = 145 + Math.random() * 200;
+      const minY = GROUND_Y - (horse.height + 118);
+      const maxY = GROUND_Y - (horse.height + 30);
+      const baseY = minY + Math.random() * (maxY - minY);
+
+      const count = Math.random() < 0.34 ? (2 + Math.floor(Math.random() * 3)) : 1;
+      for (let i = 0; i < count; i++) {
+        const spreadX = i * (14 + Math.random() * 6);
+        const spreadY = (Math.random() - 0.5) * 18;
+        game.prizes.push({
+          x: baseX + spreadX,
+          y: Math.max(minY, Math.min(maxY, baseY + spreadY)),
+          w: 18,
+          h: 20,
+          spin: Math.random() * Math.PI * 2
+        });
+      }
+
+      game.nextPrizeIn = 155 + Math.random() * 220;
     }
 
     function getFinalScore() {
@@ -490,22 +513,48 @@
       drawHorse();
 
       game.prizes.forEach(pr => {
-        const wobble = Math.sin(pr.spin) * 2.5;
-        const ringX = pr.x + pr.w / 2;
-        const ringY = pr.y + pr.h / 2 + wobble;
+        const wobble = Math.sin(pr.spin) * 2.2;
+        const x = pr.x + pr.w / 2;
+        const y = pr.y + pr.h / 2 + wobble;
 
         ctx.save();
-        ctx.strokeStyle = '#f7d46b';
-        ctx.lineWidth = 5;
+        ctx.translate(x, y);
+        ctx.scale(0.74, 0.74);
+
+        // base horseshoe from reference style
+        ctx.strokeStyle = '#2e313a';
+        ctx.lineCap = 'round';
+        ctx.lineWidth = 10;
         ctx.beginPath();
-        ctx.arc(ringX, ringY, 7, Math.PI * 0.2, Math.PI * 1.8);
+        ctx.arc(0, 0, 14, Math.PI * 0.2, Math.PI * 0.8, true);
         ctx.stroke();
 
-        ctx.strokeStyle = '#9e7a1a';
-        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#f3b33e';
+        ctx.lineWidth = 6.6;
         ctx.beginPath();
-        ctx.arc(ringX, ringY, 7, Math.PI * 0.2, Math.PI * 1.8);
+        ctx.arc(0, 0, 14, Math.PI * 0.2, Math.PI * 0.8, true);
         ctx.stroke();
+
+        // screw holes
+        ctx.fillStyle = '#2e313a';
+        [[-9, 6], [0, 10], [9, 6]].forEach(([hx, hy]) => {
+          ctx.beginPath();
+          ctx.arc(hx, hy, 2.25, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        // highlight stripes
+        ctx.strokeStyle = 'rgba(255,255,255,.9)';
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.moveTo(-8, -2);
+        ctx.quadraticCurveTo(-10, 2, -8.8, 6.8);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(8, -2);
+        ctx.quadraticCurveTo(10, 2, 8.8, 6.8);
+        ctx.stroke();
+
         ctx.restore();
       });
 
@@ -540,6 +589,38 @@
           ctx.lineTo(ob.x + 34, bodyY + 2);
           ctx.lineTo(ob.x + 28, bodyY + 4);
           ctx.closePath();
+          ctx.fill();
+          return;
+        }
+
+        if (ob.type === 'hedgehog') {
+          const cx = ob.x + ob.w * 0.5;
+          const cy = ob.y + ob.h * 0.58;
+          const spikes = 8;
+          for (let i = 0; i < spikes; i++) {
+            const sx = ob.x + 2 + (i * (ob.w - 4)) / (spikes - 1);
+            ctx.fillStyle = '#4d3a2f';
+            ctx.beginPath();
+            ctx.moveTo(sx - 3, cy);
+            ctx.lineTo(sx, ob.y - 2 - (i % 2) * 2);
+            ctx.lineTo(sx + 3, cy);
+            ctx.closePath();
+            ctx.fill();
+          }
+
+          ctx.fillStyle = '#70513e';
+          ctx.beginPath();
+          ctx.ellipse(cx, cy, ob.w * 0.46, ob.h * 0.44, 0, Math.PI, 0, true);
+          ctx.fill();
+
+          ctx.fillStyle = '#2b2018';
+          ctx.beginPath();
+          ctx.arc(ob.x + ob.w * 0.75, cy - 2, 1.8, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = '#c89a6a';
+          ctx.beginPath();
+          ctx.arc(ob.x + ob.w * 0.92, cy + 1, 1.6, 0, Math.PI * 2);
           ctx.fill();
           return;
         }
