@@ -149,6 +149,7 @@
 
     .btn-primary { background: #ffe082; color: #1d1d1d; }
     .btn-secondary { background: #d6e4ff; color: #172b4d; }
+    .hidden { display: none !important; }
   </style>
 </head>
 <body>
@@ -172,6 +173,7 @@
           <h2>Столкновение</h2>
           <p id="crashText">Продолжить заезд или завершить попытку?</p>
           <button type="button" class="btn-secondary" id="continueBtn">Продолжить</button>
+          <button type="button" class="btn-secondary hidden" id="buyLifeBtn">Купить жизнь за 5 подков</button>
           <button type="button" class="btn-primary" id="finishBtn">Закончить</button>
         </section>
         <section class="controls-panel" id="resultPanel">
@@ -184,6 +186,7 @@
     <p class="hint"><span class="start">Старт</span> — кнопкой, в прыжке собирай подковы и избегай ежей.</p>
   </main>
 
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
     const canvas = document.getElementById('game');
     const ctx = canvas.getContext('2d');
@@ -199,9 +202,16 @@
     const startBtn = document.getElementById('startBtn');
     const continueBtn = document.getElementById('continueBtn');
     const finishBtn = document.getElementById('finishBtn');
+    const buyLifeBtn = document.getElementById('buyLifeBtn');
     const restartBtn = document.getElementById('restartBtn');
     const resultText = document.getElementById('resultText');
     const crashText = document.getElementById('crashText');
+
+    const tgApp = {
+      api: null,
+      userName: '',
+      available: false
+    };
 
     const horseSprite = new Image();
     horseSprite.src = 'equestrian.svg';
@@ -366,6 +376,98 @@
       jump(isDoubleTap);
     }
 
+    function initTelegramWebApp() {
+      const tg = window.Telegram?.WebApp;
+      if (!tg) return;
+
+      tgApp.api = tg;
+      tgApp.available = true;
+      tgApp.userName = tg.initDataUnsafe?.user?.first_name || '';
+
+      tg.ready();
+      tg.expand();
+      tg.enableClosingConfirmation();
+
+      try {
+        tg.setHeaderColor('#2f6ea6');
+        tg.setBackgroundColor('#74bfe9');
+      } catch (e) {
+        // noop: older clients may not support these methods
+      }
+
+      if (tgApp.userName) {
+        crashText.textContent = `Удачи, ${tgApp.userName}!`;
+      }
+    }
+
+    function updateTelegramMainButton(mode) {
+      if (!tgApp.available || !tgApp.api?.MainButton) return;
+
+      const btn = tgApp.api.MainButton;
+      btn.offClick(finishRun);
+      btn.offClick(restart);
+      btn.offClick(continueRun);
+
+      if (mode === 'start') {
+        btn.setText('Старт заезда');
+        btn.onClick(restart);
+        btn.show();
+        return;
+      }
+
+      if (mode === 'crash') {
+        if (game.continuesLeft > 0) {
+          btn.setText('Продолжить');
+          btn.onClick(continueRun);
+          btn.show();
+          return;
+        }
+
+        btn.setText('Закончить');
+        btn.onClick(finishRun);
+        btn.show();
+        return;
+      }
+
+      if (mode === 'result') {
+        btn.setText('Начать заново');
+        btn.onClick(restart);
+        btn.show();
+        return;
+      }
+
+      btn.hide();
+    }
+
+    function setPanel(mode) {
+      startPanel.classList.toggle('visible', mode === 'start');
+      crashPanel.classList.toggle('visible', mode === 'crash');
+      resultPanel.classList.toggle('visible', mode === 'result');
+      updateTelegramMainButton(mode);
+    }
+
+    function showContinueOption() {
+      continueBtn.classList.remove('hidden');
+      buyLifeBtn.classList.add('hidden');
+      crashText.textContent = `Можно продолжить. Осталось попыток: ${game.continuesLeft}`;
+      setPanel('crash');
+    }
+
+    function showBuyLifeOption() {
+      continueBtn.classList.add('hidden');
+      buyLifeBtn.classList.remove('hidden');
+      crashText.textContent = 'Попытки закончились. Купить 1 жизнь за 5 подков?';
+      setPanel('crash');
+    }
+
+    function onPointerDown(e) {
+      e.preventDefault();
+      const now = performance.now();
+      const isDoubleTap = now - lastTapAt < DOUBLE_TAP_MS;
+      lastTapAt = now;
+      jump(isDoubleTap);
+    }
+
     function setPanel(mode) {
       startPanel.classList.toggle('visible', mode === 'start');
       crashPanel.classList.toggle('visible', mode === 'crash');
@@ -389,6 +491,8 @@
       horse.onGround = true;
       horse.jumpsUsed = 0;
       game.message = 'Поехали!';
+      continueBtn.classList.remove('hidden');
+      buyLifeBtn.classList.add('hidden');
       setPanel('none');
     }
 
@@ -401,8 +505,20 @@
       horse.jumpsUsed = 0;
       game.obstacles = game.obstacles.filter(ob => ob.x > horse.x + horse.width + 50);
       game.prizes = game.prizes.filter(pr => pr.x > horse.x + horse.width + 50);
+      continueBtn.classList.remove('hidden');
+      buyLifeBtn.classList.add('hidden');
       crashText.textContent = 'Продолжить заезд или завершить попытку?';
       setPanel('none');
+    }
+
+    function buyLife() {
+      if (game.horseshoes < 5) {
+        finishRun();
+        return;
+      }
+      game.horseshoes -= 5;
+      game.continuesLeft = 1;
+      continueRun();
     }
 
     function finishRun() {
@@ -480,6 +596,7 @@
           if (intersects(hitbox, game.prizes[i])) {
             game.horseshoes += 1;
             game.prizes.splice(i, 1);
+            tgApp.api?.HapticFeedback?.impactOccurred('light');
           }
         }
 
@@ -488,6 +605,7 @@
             game.running = false;
             game.crashed = true;
             game.message = 'Столкновение!';
+            tgApp.api?.HapticFeedback?.notificationOccurred('error');
             game.continuesLeft -= 1;
             const total = getFinalScore();
             if (total > game.best) {
@@ -497,8 +615,9 @@
             }
 
             if (game.continuesLeft > 0) {
-              crashText.textContent = `Можно продолжить. Осталось попыток: ${game.continuesLeft}`;
-              setPanel('crash');
+              showContinueOption();
+            } else if (game.horseshoes >= 5) {
+              showBuyLifeOption();
             } else {
               finishRun();
             }
@@ -712,6 +831,7 @@
 
     startBtn.addEventListener('click', restart);
     continueBtn.addEventListener('click', continueRun);
+    buyLifeBtn.addEventListener('click', buyLife);
     finishBtn.addEventListener('click', finishRun);
     restartBtn.addEventListener('click', restart);
 
@@ -732,6 +852,7 @@
       }
     });
 
+    initTelegramWebApp();
     setPanel('start');
     loop();
   </script>
