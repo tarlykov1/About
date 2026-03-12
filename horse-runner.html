@@ -460,6 +460,20 @@
       setPanel('crash');
     }
 
+    function onPointerDown(e) {
+      e.preventDefault();
+      const now = performance.now();
+      const isDoubleTap = now - lastTapAt < DOUBLE_TAP_MS;
+      lastTapAt = now;
+      jump(isDoubleTap);
+    }
+
+    function setPanel(mode) {
+      startPanel.classList.toggle('visible', mode === 'start');
+      crashPanel.classList.toggle('visible', mode === 'crash');
+      resultPanel.classList.toggle('visible', mode === 'result');
+    }
+
     function restart() {
       game.running = true;
       game.crashed = false;
