@@ -52,6 +52,7 @@
       background: linear-gradient(to bottom, var(--bg) 0 65%, var(--field) 65% 100%);
       box-shadow: 0 10px 30px rgba(0,0,0,.25);
       border: 2px solid rgba(255,255,255,.28);
+      touch-action: none;
     }
 
     .hint {
@@ -99,6 +100,8 @@
       vy: 0,
       gravity: 0.95,
       jumpForce: -16,
+      doubleJumpForce: -14,
+      jumpsUsed: 0,
       onGround: true,
       bobTimer: 0
     };
@@ -138,7 +141,11 @@
       game.nextObstacleIn = 55 + Math.random() * 70;
     }
 
-    function jump() {
+    const DOUBLE_TAP_MS = 280;
+    let lastTapAt = 0;
+    let lastTouchEndAt = 0;
+
+    function jump(isDoubleTap = false, allowAirJump = false) {
       if (!game.running) {
         restart();
         return;
@@ -146,7 +153,22 @@
       if (horse.onGround) {
         horse.vy = horse.jumpForce;
         horse.onGround = false;
+        horse.jumpsUsed = 1;
+        return;
       }
+
+      if (horse.jumpsUsed === 1 && (isDoubleTap || allowAirJump)) {
+        horse.vy = horse.doubleJumpForce;
+        horse.jumpsUsed = 2;
+      }
+    }
+
+    function onPointerDown(e) {
+      e.preventDefault();
+      const now = performance.now();
+      const isDoubleTap = now - lastTapAt < DOUBLE_TAP_MS;
+      lastTapAt = now;
+      jump(isDoubleTap);
     }
 
     function restart() {
@@ -158,6 +180,7 @@
       horse.y = GROUND_Y;
       horse.vy = 0;
       horse.onGround = true;
+      horse.jumpsUsed = 0;
       game.message = 'Поехали!';
     }
 
@@ -187,6 +210,7 @@
           horse.y = GROUND_Y;
           horse.vy = 0;
           horse.onGround = true;
+          horse.jumpsUsed = 0;
         }
 
         horse.bobTimer += 0.18;
@@ -306,11 +330,20 @@
       requestAnimationFrame(loop);
     }
 
-    canvas.addEventListener('pointerdown', jump);
+    canvas.addEventListener('pointerdown', onPointerDown, { passive: false });
+    canvas.addEventListener('dblclick', (e) => e.preventDefault());
+    document.addEventListener('touchend', (e) => {
+      const now = Date.now();
+      if (now - lastTouchEndAt <= DOUBLE_TAP_MS) {
+        e.preventDefault();
+      }
+      lastTouchEndAt = now;
+    }, { passive: false });
+
     window.addEventListener('keydown', (e) => {
       if (e.code === 'Space' || e.code === 'ArrowUp') {
         e.preventDefault();
-        jump();
+        jump(false, true);
       }
     });
 
