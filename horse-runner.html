@@ -127,7 +127,8 @@
 <body>
   <main class="game-wrap">
     <section class="hud" aria-live="polite">
-      <div>Очки: <span id="score">0</span></div>
+      <div>Дистанция: <span id="score">0</span></div>
+      <div>Подковы: <span id="horseshoes">0</span></div>
       <div>Рекорд: <span id="best">0</span></div>
       <div>Скорость: <span id="speed">1.0x</span></div>
     </section>
@@ -152,7 +153,7 @@
         </section>
       </div>
     </div>
-    <p class="hint"><span class="start">Старт</span> — кнопкой, прыжок — тапом/пробелом.</p>
+    <p class="hint"><span class="start">Старт</span> — кнопкой, в прыжке собирай подковы (не всегда безопасно).</p>
   </main>
 
   <script>
@@ -162,6 +163,7 @@
     const scoreEl = document.getElementById('score');
     const bestEl = document.getElementById('best');
     const speedEl = document.getElementById('speed');
+    const horseshoesEl = document.getElementById('horseshoes');
     const startPanel = document.getElementById('startPanel');
     const crashPanel = document.getElementById('crashPanel');
     const resultPanel = document.getElementById('resultPanel');
@@ -194,11 +196,14 @@
       crashed: false,
       ended: false,
       score: 0,
+      horseshoes: 0,
       best: Number(localStorage.getItem('horseBest') || 0),
       speed: 6,
       obstacles: [],
+      prizes: [],
       clouds: [],
       nextObstacleIn: 70,
+      nextPrizeIn: 150,
       frame: 0,
       message: 'Старт!'
     };
@@ -257,6 +262,29 @@
       game.nextObstacleIn = 55 + Math.random() * 70;
     }
 
+    function spawnHorseshoe() {
+      let prizeX = canvas.width + 30;
+      const lastObstacle = game.obstacles[game.obstacles.length - 1];
+      if (lastObstacle && lastObstacle.x > canvas.width * 0.52) {
+        prizeX = lastObstacle.x + lastObstacle.w + 12 + Math.random() * 28;
+      }
+
+      const minY = GROUND_Y - (horse.height + 108);
+      const maxY = GROUND_Y - (horse.height + 24);
+      game.prizes.push({
+        x: prizeX,
+        y: minY + Math.random() * (maxY - minY),
+        w: 18,
+        h: 20,
+        spin: Math.random() * Math.PI * 2
+      });
+      game.nextPrizeIn = 145 + Math.random() * 200;
+    }
+
+    function getFinalScore() {
+      return game.score + game.horseshoes;
+    }
+
     const DOUBLE_TAP_MS = 280;
     let lastTapAt = 0;
     let lastTouchEndAt = 0;
@@ -295,9 +323,12 @@
       game.crashed = false;
       game.ended = false;
       game.score = 0;
+      game.horseshoes = 0;
       game.speed = 6;
       game.obstacles.length = 0;
+      game.prizes.length = 0;
       game.nextObstacleIn = 50;
+      game.nextPrizeIn = 140;
       horse.y = GROUND_Y;
       horse.vy = 0;
       horse.onGround = true;
@@ -314,6 +345,7 @@
       horse.onGround = true;
       horse.jumpsUsed = 0;
       game.obstacles = game.obstacles.filter(ob => ob.x > horse.x + horse.width + 50);
+      game.prizes = game.prizes.filter(pr => pr.x > horse.x + horse.width + 50);
       setPanel('none');
     }
 
@@ -321,7 +353,13 @@
       game.running = false;
       game.crashed = false;
       game.ended = true;
-      resultText.textContent = `${game.score} очков`;
+      const total = getFinalScore();
+      if (total > game.best) {
+        game.best = total;
+        localStorage.setItem('horseBest', game.best);
+        bestEl.textContent = game.best;
+      }
+      resultText.textContent = `Дистанция: ${game.score} • Подковы: ${game.horseshoes} • Итог: ${total}`;
       setPanel('result');
     }
 
@@ -357,11 +395,20 @@
         game.nextObstacleIn -= 1;
         if (game.nextObstacleIn <= 0) spawnObstacle();
 
+        game.nextPrizeIn -= 1;
+        if (game.nextPrizeIn <= 0 && Math.random() < 0.55) spawnHorseshoe();
+
         game.obstacles.forEach(ob => {
           ob.x -= game.speed;
           if (ob.type === 'bird') ob.flap += 0.28;
         });
         game.obstacles = game.obstacles.filter(ob => ob.x + ob.w > -20);
+
+        game.prizes.forEach(pr => {
+          pr.x -= game.speed;
+          pr.spin += 0.2;
+        });
+        game.prizes = game.prizes.filter(pr => pr.x + pr.w > -20);
 
         const hitbox = {
           x: horse.x + 16,
@@ -370,14 +417,22 @@
           h: horse.height - 10
         };
 
+        for (let i = game.prizes.length - 1; i >= 0; i--) {
+          if (intersects(hitbox, game.prizes[i])) {
+            game.horseshoes += 1;
+            game.prizes.splice(i, 1);
+          }
+        }
+
         for (const ob of game.obstacles) {
           if (intersects(hitbox, ob)) {
             game.running = false;
             game.crashed = true;
             game.message = 'Столкновение!';
             setPanel('crash');
-            if (game.score > game.best) {
-              game.best = game.score;
+            const total = getFinalScore();
+            if (total > game.best) {
+              game.best = total;
               localStorage.setItem('horseBest', game.best);
               bestEl.textContent = game.best;
             }
@@ -387,6 +442,7 @@
       }
 
       scoreEl.textContent = game.score;
+      horseshoesEl.textContent = game.horseshoes;
       speedEl.textContent = (game.speed / 6).toFixed(1) + 'x';
     }
 
@@ -432,6 +488,26 @@
       }
 
       drawHorse();
+
+      game.prizes.forEach(pr => {
+        const wobble = Math.sin(pr.spin) * 2.5;
+        const ringX = pr.x + pr.w / 2;
+        const ringY = pr.y + pr.h / 2 + wobble;
+
+        ctx.save();
+        ctx.strokeStyle = '#f7d46b';
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.arc(ringX, ringY, 7, Math.PI * 0.2, Math.PI * 1.8);
+        ctx.stroke();
+
+        ctx.strokeStyle = '#9e7a1a';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(ringX, ringY, 7, Math.PI * 0.2, Math.PI * 1.8);
+        ctx.stroke();
+        ctx.restore();
+      });
 
       game.obstacles.forEach(ob => {
         if (ob.type === 'bird') {
