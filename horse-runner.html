@@ -202,6 +202,14 @@
       jump(isDoubleTap);
     }
 
+    function onPointerDown(e) {
+      e.preventDefault();
+      const now = performance.now();
+      const isDoubleTap = now - lastTapAt < DOUBLE_TAP_MS;
+      lastTapAt = now;
+      jump(isDoubleTap);
+    }
+
     function restart() {
       game.running = true;
       game.score = 0;
