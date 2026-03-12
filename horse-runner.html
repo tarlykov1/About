@@ -47,6 +47,33 @@
       margin-bottom: 8px;
       font-weight: 600;
       backdrop-filter: blur(6px);
+      flex-wrap: wrap;
+    }
+
+    .hud-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      min-width: 62px;
+    }
+
+    .hud-icon {
+      width: 18px;
+      height: 18px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      line-height: 1;
+      filter: drop-shadow(0 1px 1px rgba(0,0,0,.4));
+    }
+
+    .hud-icon.horse {
+      position: relative;
+      border: 2px solid #ffd25b;
+      border-top: 0;
+      border-radius: 0 0 10px 10px;
+      transform: translateY(1px);
     }
 
     canvas {
@@ -127,10 +154,11 @@
 <body>
   <main class="game-wrap">
     <section class="hud" aria-live="polite">
-      <div>Дистанция: <span id="score">0</span></div>
-      <div>Подковы: <span id="horseshoes">0</span></div>
-      <div>Рекорд: <span id="best">0</span></div>
-      <div>Скорость: <span id="speed">1.0x</span></div>
+      <div class="hud-item"><span class="hud-icon">🏁</span><span id="score">0</span></div>
+      <div class="hud-item"><span class="hud-icon horse"></span><span id="horseshoes">0</span></div>
+      <div class="hud-item">🏆 <span id="best">0</span></div>
+      <div class="hud-item">⚡ <span id="speed">1.0x</span></div>
+      <div class="hud-item">❤️ <span id="lives">3</span></div>
     </section>
     <div class="stage">
       <canvas id="game" width="390" height="640" aria-label="Игра: лошадка с всадником"></canvas>
@@ -142,7 +170,7 @@
         </section>
         <section class="controls-panel" id="crashPanel">
           <h2>Столкновение</h2>
-          <p>Продолжить заезд или завершить попытку?</p>
+          <p id="crashText">Продолжить заезд или завершить попытку?</p>
           <button type="button" class="btn-secondary" id="continueBtn">Продолжить</button>
           <button type="button" class="btn-primary" id="finishBtn">Закончить</button>
         </section>
@@ -164,6 +192,7 @@
     const bestEl = document.getElementById('best');
     const speedEl = document.getElementById('speed');
     const horseshoesEl = document.getElementById('horseshoes');
+    const livesEl = document.getElementById('lives');
     const startPanel = document.getElementById('startPanel');
     const crashPanel = document.getElementById('crashPanel');
     const resultPanel = document.getElementById('resultPanel');
@@ -172,6 +201,7 @@
     const finishBtn = document.getElementById('finishBtn');
     const restartBtn = document.getElementById('restartBtn');
     const resultText = document.getElementById('resultText');
+    const crashText = document.getElementById('crashText');
 
     const horseSprite = new Image();
     horseSprite.src = 'equestrian.svg';
@@ -197,6 +227,7 @@
       ended: false,
       score: 0,
       horseshoes: 0,
+      continuesLeft: 3,
       best: Number(localStorage.getItem('horseBest') || 0),
       speed: 6,
       obstacles: [],
@@ -347,6 +378,7 @@
       game.ended = false;
       game.score = 0;
       game.horseshoes = 0;
+      game.continuesLeft = 3;
       game.speed = 6;
       game.obstacles.length = 0;
       game.prizes.length = 0;
@@ -369,6 +401,7 @@
       horse.jumpsUsed = 0;
       game.obstacles = game.obstacles.filter(ob => ob.x > horse.x + horse.width + 50);
       game.prizes = game.prizes.filter(pr => pr.x > horse.x + horse.width + 50);
+      crashText.textContent = 'Продолжить заезд или завершить попытку?';
       setPanel('none');
     }
 
@@ -383,6 +416,9 @@
         bestEl.textContent = game.best;
       }
       resultText.textContent = `Дистанция: ${game.score} • Подковы: ${game.horseshoes} • Итог: ${total}`;
+      crashText.textContent = game.continuesLeft > 0
+        ? `Можно продолжить. Осталось попыток: ${game.continuesLeft}`
+        : 'Попытки закончились. Игра завершена.';
       setPanel('result');
     }
 
@@ -452,12 +488,19 @@
             game.running = false;
             game.crashed = true;
             game.message = 'Столкновение!';
-            setPanel('crash');
+            game.continuesLeft -= 1;
             const total = getFinalScore();
             if (total > game.best) {
               game.best = total;
               localStorage.setItem('horseBest', game.best);
               bestEl.textContent = game.best;
+            }
+
+            if (game.continuesLeft > 0) {
+              crashText.textContent = `Можно продолжить. Осталось попыток: ${game.continuesLeft}`;
+              setPanel('crash');
+            } else {
+              finishRun();
             }
             break;
           }
@@ -466,6 +509,7 @@
 
       scoreEl.textContent = game.score;
       horseshoesEl.textContent = game.horseshoes;
+      livesEl.textContent = Math.max(0, game.continuesLeft);
       speedEl.textContent = (game.speed / 6).toFixed(1) + 'x';
     }
 
