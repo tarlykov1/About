@@ -133,6 +133,7 @@
       const h = 34 + Math.random() * 34;
       const w = 22 + Math.random() * 26;
       const isBird = Math.random() < Math.min(0.45, 0.2 + game.score / 4500);
+      const isTallFence = !isBird && Math.random() < Math.min(0.28, 0.08 + game.score / 6000);
       if (isBird) {
         const birdY = GROUND_Y - (horse.height + 25 + Math.random() * 70);
         game.obstacles.push({
@@ -144,6 +145,20 @@
           flap: Math.random() * Math.PI * 2
         });
         game.nextObstacleIn = 38 + Math.random() * 44;
+        return;
+      }
+
+      if (isTallFence) {
+        const tallH = 78 + Math.random() * 32;
+        const tallW = 34 + Math.random() * 16;
+        game.obstacles.push({
+          type: 'tallFence',
+          x: canvas.width + 20,
+          y: GROUND_Y - tallH,
+          w: tallW,
+          h: tallH
+        });
+        game.nextObstacleIn = 62 + Math.random() * 76;
         return;
       }
 
@@ -177,6 +192,14 @@
         horse.vy = horse.doubleJumpForce;
         horse.jumpsUsed = 2;
       }
+    }
+
+    function onPointerDown(e) {
+      e.preventDefault();
+      const now = performance.now();
+      const isDoubleTap = now - lastTapAt < DOUBLE_TAP_MS;
+      lastTapAt = now;
+      jump(isDoubleTap);
     }
 
     function onPointerDown(e) {
@@ -345,6 +368,7 @@
         const left = ob.x;
         const right = ob.x + ob.w;
         const baseY = GROUND_Y;
+        const isTallFence = ob.type === 'tallFence';
 
         // show-jumping standards
         ctx.fillStyle = '#f4f0e6';
@@ -355,10 +379,11 @@
         ctx.fillRect(right - 4, baseY - 8, 12, 8);
 
         // colored poles
-        const poleGap = 11;
-        for (let i = 0; i < 3; i++) {
+        const poleGap = isTallFence ? 10 : 11;
+        const poleCount = isTallFence ? 5 : 3;
+        for (let i = 0; i < poleCount; i++) {
           const y = baseY - 18 - i * poleGap;
-          ctx.fillStyle = i % 2 ? '#b9382f' : '#ffffff';
+          ctx.fillStyle = i % 2 ? (isTallFence ? '#b12a24' : '#b9382f') : '#ffffff';
           ctx.fillRect(left + 1, y, ob.w - 2, 5);
           ctx.fillStyle = '#2b2b2b';
           ctx.fillRect(left + 1 + (game.frame % 10), y, 6, 5);
