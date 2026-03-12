@@ -32,6 +32,10 @@
       padding: 12px;
     }
 
+    .stage {
+      position: relative;
+    }
+
     .hud {
       display: flex;
       justify-content: space-between;
@@ -67,6 +71,57 @@
       color: var(--accent);
       font-weight: 700;
     }
+
+    .controls {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      padding: 18px;
+    }
+
+    .controls-panel {
+      pointer-events: auto;
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+      width: min(280px, 100%);
+      background: rgba(0, 0, 0, 0.62);
+      border: 1px solid rgba(255,255,255,.2);
+      border-radius: 14px;
+      padding: 14px;
+      text-align: center;
+      color: #fff;
+      backdrop-filter: blur(5px);
+    }
+
+    .controls-panel.visible { display: flex; }
+
+    .controls-panel h2 {
+      margin: 0;
+      font-size: 26px;
+      color: #fff3c4;
+    }
+
+    .controls-panel p {
+      margin: 0;
+      opacity: .9;
+      font-size: 15px;
+    }
+
+    .controls button {
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-primary { background: #ffe082; color: #1d1d1d; }
+    .btn-secondary { background: #d6e4ff; color: #172b4d; }
   </style>
 </head>
 <body>
@@ -76,8 +131,28 @@
       <div>Рекорд: <span id="best">0</span></div>
       <div>Скорость: <span id="speed">1.0x</span></div>
     </section>
-    <canvas id="game" width="390" height="640" aria-label="Игра: лошадка с всадником"></canvas>
-    <p class="hint"><span class="start">Тапни экран</span>, чтобы прыгнуть и перепрыгнуть препятствия.</p>
+    <div class="stage">
+      <canvas id="game" width="390" height="640" aria-label="Игра: лошадка с всадником"></canvas>
+      <div class="controls" aria-live="polite">
+        <section class="controls-panel visible" id="startPanel">
+          <h2>Конкур</h2>
+          <p>Нажми «Старт», затем тапай по экрану для прыжков.</p>
+          <button type="button" class="btn-primary" id="startBtn">Старт</button>
+        </section>
+        <section class="controls-panel" id="crashPanel">
+          <h2>Столкновение</h2>
+          <p>Продолжить заезд или завершить попытку?</p>
+          <button type="button" class="btn-secondary" id="continueBtn">Продолжить</button>
+          <button type="button" class="btn-primary" id="finishBtn">Закончить</button>
+        </section>
+        <section class="controls-panel" id="resultPanel">
+          <h2>Твой результат</h2>
+          <p id="resultText">0 очков</p>
+          <button type="button" class="btn-primary" id="restartBtn">Начать заново</button>
+        </section>
+      </div>
+    </div>
+    <p class="hint"><span class="start">Старт</span> — кнопкой, прыжок — тапом/пробелом.</p>
   </main>
 
   <script>
@@ -87,6 +162,14 @@
     const scoreEl = document.getElementById('score');
     const bestEl = document.getElementById('best');
     const speedEl = document.getElementById('speed');
+    const startPanel = document.getElementById('startPanel');
+    const crashPanel = document.getElementById('crashPanel');
+    const resultPanel = document.getElementById('resultPanel');
+    const startBtn = document.getElementById('startBtn');
+    const continueBtn = document.getElementById('continueBtn');
+    const finishBtn = document.getElementById('finishBtn');
+    const restartBtn = document.getElementById('restartBtn');
+    const resultText = document.getElementById('resultText');
 
     const horseSprite = new Image();
     horseSprite.src = 'equestrian.svg';
@@ -107,7 +190,9 @@
     };
 
     const game = {
-      running: true,
+      running: false,
+      crashed: false,
+      ended: false,
       score: 0,
       best: Number(localStorage.getItem('horseBest') || 0),
       speed: 6,
@@ -177,10 +262,7 @@
     let lastTouchEndAt = 0;
 
     function jump(isDoubleTap = false, allowAirJump = false) {
-      if (!game.running) {
-        restart();
-        return;
-      }
+      if (!game.running) return;
       if (horse.onGround) {
         horse.vy = horse.jumpForce;
         horse.onGround = false;
@@ -202,16 +284,16 @@
       jump(isDoubleTap);
     }
 
-    function onPointerDown(e) {
-      e.preventDefault();
-      const now = performance.now();
-      const isDoubleTap = now - lastTapAt < DOUBLE_TAP_MS;
-      lastTapAt = now;
-      jump(isDoubleTap);
+    function setPanel(mode) {
+      startPanel.classList.toggle('visible', mode === 'start');
+      crashPanel.classList.toggle('visible', mode === 'crash');
+      resultPanel.classList.toggle('visible', mode === 'result');
     }
 
     function restart() {
       game.running = true;
+      game.crashed = false;
+      game.ended = false;
       game.score = 0;
       game.speed = 6;
       game.obstacles.length = 0;
@@ -221,6 +303,26 @@
       horse.onGround = true;
       horse.jumpsUsed = 0;
       game.message = 'Поехали!';
+      setPanel('none');
+    }
+
+    function continueRun() {
+      game.running = true;
+      game.crashed = false;
+      horse.y = GROUND_Y;
+      horse.vy = 0;
+      horse.onGround = true;
+      horse.jumpsUsed = 0;
+      game.obstacles = game.obstacles.filter(ob => ob.x > horse.x + horse.width + 50);
+      setPanel('none');
+    }
+
+    function finishRun() {
+      game.running = false;
+      game.crashed = false;
+      game.ended = true;
+      resultText.textContent = `${game.score} очков`;
+      setPanel('result');
     }
 
     function intersects(a, b) {
@@ -228,17 +330,16 @@
     }
 
     function update() {
-      game.frame += 1;
-
-      game.clouds.forEach(cloud => {
-        cloud.x -= cloud.s;
-        if (cloud.x + cloud.w < 0) {
-          cloud.x = canvas.width + 10;
-          cloud.y = 50 + Math.random() * 160;
-        }
-      });
-
       if (game.running) {
+        game.frame += 1;
+
+        game.clouds.forEach(cloud => {
+          cloud.x -= cloud.s;
+          if (cloud.x + cloud.w < 0) {
+            cloud.x = canvas.width + 10;
+            cloud.y = 50 + Math.random() * 160;
+          }
+        });
         game.score += 1;
         game.speed = 6 + Math.min(18, game.score / 220);
 
@@ -272,7 +373,9 @@
         for (const ob of game.obstacles) {
           if (intersects(hitbox, ob)) {
             game.running = false;
-            game.message = 'Столкновение! Тап для рестарта';
+            game.crashed = true;
+            game.message = 'Столкновение!';
+            setPanel('crash');
             if (game.score > game.best) {
               game.best = game.score;
               localStorage.setItem('horseBest', game.best);
@@ -390,15 +493,13 @@
         }
       });
 
-      if (!game.running) {
-        ctx.fillStyle = 'rgba(0,0,0,.45)';
+      if (game.crashed) {
+        ctx.fillStyle = 'rgba(0,0,0,.35)';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = '#fff3c4';
         ctx.font = 'bold 28px system-ui';
         ctx.textAlign = 'center';
-        ctx.fillText('Игра окончена', canvas.width / 2, canvas.height / 2 - 14);
-        ctx.font = '600 18px system-ui';
-        ctx.fillText(game.message, canvas.width / 2, canvas.height / 2 + 20);
+        ctx.fillText('Столкновение!', canvas.width / 2, canvas.height / 2 - 14);
       }
     }
 
@@ -407,6 +508,11 @@
       draw();
       requestAnimationFrame(loop);
     }
+
+    startBtn.addEventListener('click', restart);
+    continueBtn.addEventListener('click', continueRun);
+    finishBtn.addEventListener('click', finishRun);
+    restartBtn.addEventListener('click', restart);
 
     canvas.addEventListener('pointerdown', onPointerDown, { passive: false });
     canvas.addEventListener('dblclick', (e) => e.preventDefault());
@@ -421,10 +527,11 @@
     window.addEventListener('keydown', (e) => {
       if (e.code === 'Space' || e.code === 'ArrowUp') {
         e.preventDefault();
-        jump(false, true);
+        if (game.running) jump(false, true);
       }
     });
 
+    setPanel('start');
     loop();
   </script>
 </body>
