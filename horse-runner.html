@@ -245,9 +245,13 @@
       clouds: [],
       nextObstacleIn: 70,
       nextPrizeIn: 150,
+      safeFrames: 0,
       frame: 0,
       message: 'Старт!'
     };
+
+    const START_SAFE_FRAMES = 180;
+    const CONTINUE_SAFE_FRAMES = 135;
 
     bestEl.textContent = game.best;
 
@@ -261,16 +265,18 @@
     }
 
     function spawnObstacle() {
+      const spawnX = canvas.width + 20;
       const h = 34 + Math.random() * 34;
       const w = 22 + Math.random() * 26;
       const isBird = Math.random() < Math.min(0.45, 0.2 + game.score / 4500);
       const isHedgehog = !isBird && Math.random() < Math.min(0.22, 0.06 + game.score / 7500);
       const isTallFence = !isBird && !isHedgehog && Math.random() < Math.min(0.28, 0.08 + game.score / 6000);
+      const isLog = !isBird && !isHedgehog && !isTallFence && Math.random() < Math.min(0.35, 0.14 + game.score / 9000);
       if (isBird) {
         const birdY = GROUND_Y - (horse.height + 25 + Math.random() * 70);
         game.obstacles.push({
           type: 'bird',
-          x: canvas.width + 20,
+          x: spawnX,
           y: birdY,
           w: 34,
           h: 22,
@@ -285,12 +291,21 @@
         const tallW = 34 + Math.random() * 16;
         game.obstacles.push({
           type: 'tallFence',
-          x: canvas.width + 20,
+          x: spawnX,
           y: GROUND_Y - tallH,
           w: tallW,
           h: tallH
         });
-        game.nextObstacleIn = 62 + Math.random() * 76;
+        if (game.score > 900 && Math.random() < Math.min(0.34, game.score / 5200)) {
+          game.obstacles.push({
+            type: 'fence',
+            x: spawnX + tallW + 18 + Math.random() * 20,
+            y: GROUND_Y - (34 + Math.random() * 28),
+            w: 22 + Math.random() * 20,
+            h: 34 + Math.random() * 28
+          });
+        }
+        game.nextObstacleIn = 58 + Math.random() * 68;
         return;
       }
 
@@ -299,23 +314,57 @@
         const hedgehogH = 28 + Math.random() * 8;
         game.obstacles.push({
           type: 'hedgehog',
-          x: canvas.width + 20,
+          x: spawnX,
           y: GROUND_Y - hedgehogH + 2,
           w: hedgehogW,
           h: hedgehogH
         });
-        game.nextObstacleIn = 44 + Math.random() * 56;
+        if (game.score > 1100 && Math.random() < Math.min(0.28, game.score / 6200)) {
+          game.obstacles.push({
+            type: Math.random() < 0.45 ? 'log' : 'fence',
+            x: spawnX + hedgehogW + 16 + Math.random() * 18,
+            y: GROUND_Y - 34,
+            w: 36 + Math.random() * 18,
+            h: 24 + Math.random() * 14
+          });
+        }
+        game.nextObstacleIn = 42 + Math.random() * 50;
+        return;
+      }
+
+      if (isLog) {
+        const logW = 44 + Math.random() * 22;
+        const logH = 20 + Math.random() * 12;
+        game.obstacles.push({
+          type: 'log',
+          x: spawnX,
+          y: GROUND_Y - logH + 1,
+          w: logW,
+          h: logH
+        });
+        game.nextObstacleIn = 48 + Math.random() * 62;
         return;
       }
 
       game.obstacles.push({
         type: 'fence',
-        x: canvas.width + 20,
+        x: spawnX,
         y: GROUND_Y - h,
         w,
         h
       });
-      game.nextObstacleIn = 55 + Math.random() * 70;
+      if (game.score > 1000 && Math.random() < Math.min(0.36, game.score / 5000)) {
+        const secondType = Math.random() < 0.4 ? 'log' : 'fence';
+        const secondH = secondType === 'log' ? 20 + Math.random() * 12 : 34 + Math.random() * 26;
+        game.obstacles.push({
+          type: secondType,
+          x: spawnX + w + 14 + Math.random() * 20,
+          y: GROUND_Y - secondH + (secondType === 'log' ? 1 : 0),
+          w: secondType === 'log' ? 44 + Math.random() * 18 : 20 + Math.random() * 18,
+          h: secondH
+        });
+      }
+      game.nextObstacleIn = 50 + Math.random() * 60;
     }
 
     function spawnHorseshoe() {
@@ -329,7 +378,7 @@
       const maxY = GROUND_Y - (horse.height + 30);
       const baseY = minY + Math.random() * (maxY - minY);
 
-      const count = Math.random() < 0.34 ? (2 + Math.floor(Math.random() * 3)) : 1;
+      const count = Math.random() < 0.5 ? (2 + Math.floor(Math.random() * 3)) : 1;
       for (let i = 0; i < count; i++) {
         const spreadX = i * (14 + Math.random() * 6);
         const spreadY = (Math.random() - 0.5) * 18;
@@ -342,7 +391,7 @@
         });
       }
 
-      game.nextPrizeIn = 155 + Math.random() * 220;
+      game.nextPrizeIn = 120 + Math.random() * 175;
     }
 
     function getFinalScore() {
@@ -460,20 +509,6 @@
       setPanel('crash');
     }
 
-    function onPointerDown(e) {
-      e.preventDefault();
-      const now = performance.now();
-      const isDoubleTap = now - lastTapAt < DOUBLE_TAP_MS;
-      lastTapAt = now;
-      jump(isDoubleTap);
-    }
-
-    function setPanel(mode) {
-      startPanel.classList.toggle('visible', mode === 'start');
-      crashPanel.classList.toggle('visible', mode === 'crash');
-      resultPanel.classList.toggle('visible', mode === 'result');
-    }
-
     function restart() {
       game.running = true;
       game.crashed = false;
@@ -485,7 +520,8 @@
       game.obstacles.length = 0;
       game.prizes.length = 0;
       game.nextObstacleIn = 50;
-      game.nextPrizeIn = 140;
+      game.nextPrizeIn = 120;
+      game.safeFrames = START_SAFE_FRAMES;
       horse.y = GROUND_Y;
       horse.vy = 0;
       horse.onGround = true;
@@ -505,6 +541,9 @@
       horse.jumpsUsed = 0;
       game.obstacles = game.obstacles.filter(ob => ob.x > horse.x + horse.width + 50);
       game.prizes = game.prizes.filter(pr => pr.x > horse.x + horse.width + 50);
+      game.nextObstacleIn = 44;
+      game.nextPrizeIn = 90;
+      game.safeFrames = CONTINUE_SAFE_FRAMES;
       continueBtn.classList.remove('hidden');
       buyLifeBtn.classList.add('hidden');
       crashText.textContent = 'Продолжить заезд или завершить попытку?';
@@ -567,11 +606,15 @@
         }
 
         horse.bobTimer += 0.18;
-        game.nextObstacleIn -= 1;
-        if (game.nextObstacleIn <= 0) spawnObstacle();
+        if (game.safeFrames > 0) {
+          game.safeFrames -= 1;
+        } else {
+          game.nextObstacleIn -= 1;
+          if (game.nextObstacleIn <= 0) spawnObstacle();
+        }
 
         game.nextPrizeIn -= 1;
-        if (game.nextPrizeIn <= 0 && Math.random() < 0.55) spawnHorseshoe();
+        if (game.nextPrizeIn <= 0 && Math.random() < 0.7) spawnHorseshoe();
 
         game.obstacles.forEach(ob => {
           ob.x -= game.speed;
@@ -785,6 +828,38 @@
           ctx.beginPath();
           ctx.arc(ob.x + ob.w * 0.92, cy + 1, 1.6, 0, Math.PI * 2);
           ctx.fill();
+          return;
+        }
+
+        if (ob.type === 'log') {
+          const logY = ob.y + ob.h * 0.5;
+          const radius = ob.h * 0.48;
+          const gradient = ctx.createLinearGradient(ob.x, ob.y, ob.x, ob.y + ob.h);
+          gradient.addColorStop(0, '#b5793f');
+          gradient.addColorStop(1, '#8a542d');
+          ctx.fillStyle = gradient;
+          ctx.fillRect(ob.x, ob.y, ob.w, ob.h);
+
+          ctx.fillStyle = '#6f4324';
+          for (let i = 0; i < 4; i++) {
+            const stripeX = ob.x + 6 + i * ((ob.w - 12) / 3);
+            ctx.fillRect(stripeX, ob.y + 2, 2, ob.h - 4);
+          }
+
+          ctx.fillStyle = '#c9955b';
+          ctx.beginPath();
+          ctx.arc(ob.x + 2, logY, radius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(ob.x + ob.w - 2, logY, radius, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.strokeStyle = '#7b4d28';
+          ctx.lineWidth = 1.8;
+          ctx.beginPath();
+          ctx.arc(ob.x + 2, logY, radius * 0.64, 0, Math.PI * 2);
+          ctx.arc(ob.x + ob.w - 2, logY, radius * 0.64, 0, Math.PI * 2);
+          ctx.stroke();
           return;
         }
 
