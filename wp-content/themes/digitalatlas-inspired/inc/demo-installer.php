@@ -52,7 +52,7 @@ function dai_upsert_page(array $pageConfig): int
         'post_type' => 'page',
     ];
 
-    if ($existing instanceof WP_Post) {
+    if ($existing && isset($existing->ID)) {
         $postData['ID'] = $existing->ID;
         $pageId = wp_update_post($postData, true);
     } else {
@@ -90,9 +90,11 @@ function dai_create_demo_menu(array $pageIds): void
             continue;
         }
 
-        $alreadyInMenu = wp_get_associated_nav_menu_items($pageId, 'post_type');
-        if (!empty($alreadyInMenu)) {
-            continue;
+        if (function_exists('wp_get_associated_nav_menu_items')) {
+            $alreadyInMenu = wp_get_associated_nav_menu_items($pageId, 'post_type');
+            if (!empty($alreadyInMenu)) {
+                continue;
+            }
         }
 
         wp_update_nav_menu_item(

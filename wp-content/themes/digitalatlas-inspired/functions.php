@@ -4,9 +4,9 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-require_once get_template_directory() . '/inc/demo-installer.php';
+require_once __DIR__ . '/inc/demo-installer.php';
 
-function dai_setup_thehttps://github.com/tarlykov1/About/pull/30/conflict?name=wp-content%252Fthemes%252Fdigitalatlas-inspired%252Ffunctions.php&base_oid=bf42e1b39a2e4bcf89a55fb12abd73f3d6675227&head_oid=65fa68ff683d4784174af5a3a4fab0eaf235df16me(): void
+function dai_setup_theme(): void
 {
     add_theme_support('title-tag');
     add_theme_support('post-thumbnails');
